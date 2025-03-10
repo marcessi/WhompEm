@@ -6,7 +6,7 @@
 void Game::init()
 {
 	bPlay = true;
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.f, 0.91f, 0.847f, 1.0f);
 	scene.init();
 }
 

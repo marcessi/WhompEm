@@ -44,7 +44,22 @@ void Scene::update(int deltaTime)
 {
 	currentTime += deltaTime;
 	player->update(deltaTime);
+	glm::ivec2 posPlayer = player->getPosition();
+
+	// Calcular las coordenadas de la cámara
+	float halfCameraWidth = CAMERA_WIDTH / 2.0f;
+	float camX = posPlayer.x - halfCameraWidth;
+
+	// Asegurarse de que la cámara no se mueva más allá del límite izquierdo
+	if (camX < 32) camX = 32;
+
+	// Mantener la posición de la cámara en el eje y constante
+	float camY = 16.f;
+
+	// Ajustar la matriz de proyección para centrar la cámara en posPlayer
+	projection = glm::ortho(camX, camX + CAMERA_WIDTH, camY + CAMERA_HEIGHT, camY);
 }
+
 
 void Scene::render()
 {
