@@ -21,6 +21,13 @@
 *.mod
 *.smod
 
+*.suo
+*.user
+*.vcxproj.user
+
+*.VC.db
+*.VC.opendb
+
 # Compiled Static libraries
 *.lai
 *.la
