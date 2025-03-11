@@ -1,5 +1,2 @@
 ﻿  Player.cpp
-SOIL.lib(image_DXT.obj) : warning LNK4099: no se encontró PDB '' con 'SOIL.lib(image_DXT.obj)' o en ''; se vinculará el objeto sin tener en cuenta información de depuración
-SOIL.lib(image_helper.obj) : warning LNK4099: no se encontró PDB '' con 'SOIL.lib(image_helper.obj)' o en ''; se vinculará el objeto sin tener en cuenta información de depuración
-SOIL.lib(stb_image_aug.obj) : warning LNK4099: no se encontró PDB '' con 'SOIL.lib(stb_image_aug.obj)' o en ''; se vinculará el objeto sin tener en cuenta información de depuración
   02-Bubble.vcxproj -> C:\Users\Sergi\Desktop\Joc2D\OpenGL_VS2015\2DGame\02-Bubble\Debug\02-Bubble.exe
