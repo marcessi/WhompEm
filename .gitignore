@@ -41,3 +41,5 @@
 
 # Ignorar carpeta de Visual Studio
 .vs/
+**/Debug/
+**/Release/
