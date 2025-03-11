@@ -32,9 +32,10 @@
               "RelativeDocumentMoniker": "02-Bubble\\Player.h",
               "ToolTip": "C:\\Users\\Sergi\\Desktop\\Joc2D\\OpenGL_VS2015\\2DGame\\02-Bubble\\02-Bubble\\Player.h",
               "RelativeToolTip": "02-Bubble\\Player.h",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAewBsAAAAIAAAAAAAAAA==",
+              "ViewState": "AgIAABIAAAAAAAAAAAAewCcAAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-03-04T09:56:20.478Z"
+              "WhenOpened": "2025-03-04T09:56:20.478Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -42,9 +43,9 @@
               "Title": "Player.cpp",
               "DocumentMoniker": "C:\\Users\\Sergi\\Desktop\\Joc2D\\OpenGL_VS2015\\2DGame\\02-Bubble\\02-Bubble\\Player.cpp",
               "RelativeDocumentMoniker": "02-Bubble\\Player.cpp",
-              "ToolTip": "C:\\Users\\Sergi\\Desktop\\Joc2D\\OpenGL_VS2015\\2DGame\\02-Bubble\\02-Bubble\\Player.cpp",
-              "RelativeToolTip": "02-Bubble\\Player.cpp",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOIAAAAEAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\Sergi\\Desktop\\Joc2D\\OpenGL_VS2015\\2DGame\\02-Bubble\\02-Bubble\\Player.cpp*",
+              "RelativeToolTip": "02-Bubble\\Player.cpp*",
+              "ViewState": "AgIAAE0AAAAAAAAAAADwv2AAAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-03-04T09:53:58.331Z",
               "EditorCaption": ""
@@ -59,7 +60,8 @@
               "RelativeToolTip": "02-Bubble\\Scene.cpp",
               "ViewState": "AgIAABIAAAAAAAAAAAAAADQAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2025-02-25T09:37:09.919Z"
+              "WhenOpened": "2025-02-25T09:37:09.919Z",
+              "EditorCaption": ""
             }
           ]
         }

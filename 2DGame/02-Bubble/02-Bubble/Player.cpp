@@ -21,6 +21,7 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	spear_visible = false;
 	bJumping = false;
 	spritesheet.loadFromFile("images/soaring_eagle4.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.2, 0.2), &spritesheet, &shaderProgram);
@@ -87,13 +88,13 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 
 		spritesheet_lanza.loadFromFile("images/lanza.png", TEXTURE_PIXEL_FORMAT_RGBA);
-		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.5, 0.5), &spritesheet_lanza, &shaderProgram);
+		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.5, 0.33), &spritesheet_lanza, &shaderProgram);
 		sprite_lanza->setNumberAnimations(2);
 
-		sprite_lanza->setAnimationSpeed(THROW, 8);
-		sprite_lanza->addKeyframe(THROW, glm::vec2(5.f, 0.f));
-		sprite_lanza->addKeyframe(THROW, glm::vec2(0.f, 5.f));
-		sprite_lanza->addKeyframe(THROW, glm::vec2(5.f, 5.f));
+		sprite_lanza->setAnimationSpeed(THROW, 30);
+		sprite_lanza->addKeyframe(THROW, glm::vec2(0.f, 0.f));
+		sprite_lanza->addKeyframe(THROW, glm::vec2(0.5f, 0.33f));
+		sprite_lanza->addKeyframe(THROW, glm::vec2(5.f, 0.33f));
 
 		sprite_lanza->setAnimationSpeed(STAND, 8);
 		sprite_lanza->addKeyframe(STAND, glm::vec2(0.f, 0.f));
@@ -105,12 +106,13 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 
 	sprite_lanza->changeAnimation(0);
-	sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x +32), float(tileMapDispl.y + posPlayer.y + 16)));
+	sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x +32), float(tileMapDispl.y + posPlayer.y + -7)));
 	
 }
 
 void Player::update(int deltaTime)
 {
+	sprite_lanza->update(deltaTime);
 	sprite->update(deltaTime);
 	if(Game::instance().getKey(GLFW_KEY_LEFT))
 	{
@@ -173,16 +175,20 @@ void Player::update(int deltaTime)
 	}
 	else if (Game::instance().getKey(GLFW_KEY_X))
 	{
+		spear_visible = true;
 		if (dir == LEFT) {
 			sprite->changeAnimation(ATTACK_LEFT);
-			sprite_lanza->update(deltaTime);
 			sprite_lanza->changeAnimation(THROW);
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y - 7)));
+
 		}
 			
 		else if (dir == RIGHT) {
 			sprite->changeAnimation(ATTACK_RIGHT);
-			sprite_lanza->update(deltaTime);
+			
 			sprite_lanza->changeAnimation(THROW);
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y -7)));
+
 		}
 			
 	}
@@ -216,6 +222,7 @@ void Player::update(int deltaTime)
 	}
 	else
 	{
+		spear_visible = false;
 		posPlayer.y += FALL_STEP;
 		if(map->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y))
 		{
@@ -227,15 +234,13 @@ void Player::update(int deltaTime)
 			}
 		}
 	}
-	
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
-	sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y + 16)));
 }
 
 void Player::render()
 {
 	sprite->render();
-	sprite_lanza->render();
+	if(spear_visible) sprite_lanza->render();
 }
 
 void Player::setTileMap(TileMap *tileMap)

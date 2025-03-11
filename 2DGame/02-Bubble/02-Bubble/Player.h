@@ -37,6 +37,7 @@ private:
 	Sprite* sprite_lanza;
 	TileMap *map;
 	Direction dir;
+	bool spear_visible;
 
 };
 
