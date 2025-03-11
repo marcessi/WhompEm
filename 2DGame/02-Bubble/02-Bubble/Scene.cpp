@@ -11,11 +11,15 @@
 #define INIT_PLAYER_X_TILES 4
 #define INIT_PLAYER_Y_TILES 10
 
-
 Scene::Scene()
 {
-	map = NULL;
-	player = NULL;
+    map = NULL;
+    player = NULL;
+    followHorizontal = true; // Inicializa la variable para seguir horizontalmente
+    checkpoints = {2048}; // Define los puntos de control
+    currentCheckpoint = 0; // Inicializa el índice del punto de control actual
+    isAnimating = false; // Inicializa la variable de animación
+    animationProgress = 0.0f; // Inicializa el progreso de la animación
 }
 
 Scene::~Scene()
@@ -42,70 +46,105 @@ void Scene::init()
 
 void Scene::update(int deltaTime)
 {
-	currentTime += deltaTime;
-	player->update(deltaTime);
-	glm::ivec2 posPlayer = player->getPosition();
+    currentTime += deltaTime;
+    player->update(deltaTime);
+    glm::ivec2 posPlayer = player->getPosition();
 
-	// Calcular las coordenadas de la cámara
-	float halfCameraWidth = CAMERA_WIDTH / 2.0f;
-	float camX = posPlayer.x - halfCameraWidth;
+    // Verificar si el jugador ha alcanzado el punto de control actual
+    if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
+    {
+        // Iniciar la animación de desplazamiento a la derecha
+        //isAnimating = true;
+        //animationProgress = 0.0f;
+        currentCheckpoint++;
+		followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+    }
 
-	// Asegurarse de que la cámara no se mueva más allá del límite izquierdo
-	if (camX < 32) camX = 32;
+    // Ejecutar la animación de desplazamiento a la derecha
+    if (isAnimating)
+    {
+        animationProgress += deltaTime*0.0001f; // Ajusta la velocidad de la animación
+        if (animationProgress >= 1.0f)
+        {
+            animationProgress = 1.0f;
+            isAnimating = false;
+            currentCheckpoint++;
+            followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+        }
+    }
 
-	// Mantener la posición de la cámara en el eje y constante
-	float camY = 16.f;
+    // Calcular las coordenadas de la cámara
+    float camX = posPlayer.x - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y - CAMERA_HEIGHT / 2.0f;
 
-	// Ajustar la matriz de proyección para centrar la cámara en posPlayer
-	projection = glm::ortho(camX, camX + CAMERA_WIDTH, camY + CAMERA_HEIGHT, camY);
+    // Ajustar la lógica de la cámara según la variable followHorizontal
+    if (followHorizontal)
+    {
+        camY = 16.f; // Mantener la posición de la cámara en el eje y constante
+    }
+    else
+    {
+        camX = checkpoints[currentCheckpoint - 1] - 16.f;
+    }
+
+    // Ajustar la posición de la cámara durante la animación
+    if (isAnimating)
+    {
+        camX = glm::mix(checkpoints[currentCheckpoint] - 16.0f, checkpoints[currentCheckpoint] + 240.0f - CAMERA_WIDTH, animationProgress);
+    }
+
+    // Asegurarse de que la cámara no se mueva más allá del límite izquierdo
+    if (camX < 32) camX = 32;
+    float camX2 = posPlayer.x - CAMERA_WIDTH / 2.0f;
+    float camY2 = posPlayer.y - CAMERA_HEIGHT / 2.0f;
+    // Ajustar la matriz de proyección para centrar la cámara en posPlayer
+    projection = glm::ortho(camX2, camX2 + CAMERA_WIDTH, camY2 + CAMERA_HEIGHT, camY2);
 }
+
 
 
 void Scene::render()
 {
-	glm::mat4 modelview;
+    glm::mat4 modelview;
 
-	texProgram.use();
-	texProgram.setUniformMatrix4f("projection", projection);
-	texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
-	modelview = glm::mat4(1.0f);
-	texProgram.setUniformMatrix4f("modelview", modelview);
-	texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
-	mapBackground->render();
-	map->render();
-	player->render();
-	
+    texProgram.use();
+    texProgram.setUniformMatrix4f("projection", projection);
+    texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+    modelview = glm::mat4(1.0f);
+    texProgram.setUniformMatrix4f("modelview", modelview);
+    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+    mapBackground->render();
+    map->render();
+    player->render();
 }
 
 void Scene::initShaders()
 {
-	Shader vShader, fShader;
+    Shader vShader, fShader;
 
-	vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
-	if(!vShader.isCompiled())
-	{
-		cout << "Vertex Shader Error" << endl;
-		cout << "" << vShader.log() << endl << endl;
-	}
-	fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
-	if(!fShader.isCompiled())
-	{
-		cout << "Fragment Shader Error" << endl;
-		cout << "" << fShader.log() << endl << endl;
-	}
-	texProgram.init();
-	texProgram.addShader(vShader);
-	texProgram.addShader(fShader);
-	texProgram.link();
-	if(!texProgram.isLinked())
-	{
-		cout << "Shader Linking Error" << endl;
-		cout << "" << texProgram.log() << endl << endl;
-	}
-	texProgram.bindFragmentOutput("outColor");
-	vShader.free();
-	fShader.free();
+    vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
+    if (!vShader.isCompiled())
+    {
+        cout << "Vertex Shader Error" << endl;
+        cout << "" << vShader.log() << endl << endl;
+    }
+    fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
+    if (!fShader.isCompiled())
+    {
+        cout << "Fragment Shader Error" << endl;
+        cout << "" << fShader.log() << endl << endl;
+    }
+    texProgram.init();
+    texProgram.addShader(vShader);
+    texProgram.addShader(fShader);
+    texProgram.link();
+    if (!texProgram.isLinked())
+    {
+        cout << "Shader Linking Error" << endl;
+        cout << "" << texProgram.log() << endl << endl;
+    }
+    texProgram.bindFragmentOutput("outColor");
+    vShader.free();
+    fShader.free();
 }
-
-
 

@@ -33,7 +33,12 @@ private:
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
-
+	bool animationCompleted;
+	bool followHorizontal; // Variable para controlar si la cámara sigue horizontalmente o verticalmente
+	std::vector<int> checkpoints; // Lista de puntos de control
+	int currentCheckpoint; // Índice del punto de control actual
+	bool isAnimating; // Variable para controlar si el jugador está en movimiento
+	float animationProgress; // Variable para controlar el progreso de la animación
 };
 
 
