@@ -1,9 +1,13 @@
 .vs/
-2DGame/02-Bubble/02-Bubble/Debug/
-2DGame/02-Bubble/Debug/
+**/bin/
+**/obj/
+
+**/Debug/
+**/Release/
 
 *.suo
 *.user
 *.vcxproj.user
+
 *.VC.db
-*.VC.VC.opendb
+*.VC.opendb

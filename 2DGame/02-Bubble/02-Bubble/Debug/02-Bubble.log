@@ -1,2 +1,1 @@
-﻿  Player.cpp
-  02-Bubble.vcxproj -> C:\Users\Sergi\Desktop\Joc2D\OpenGL_VS2015\2DGame\02-Bubble\Debug\02-Bubble.exe
+﻿LINK : fatal error LNK1104: no se puede abrir el archivo 'SOIL.lib'
