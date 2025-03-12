@@ -8,15 +8,14 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 4
-#define INIT_PLAYER_Y_TILES 10
+#define INIT_PLAYER_X_TILES 4 /*4 123 131 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 33*/
 
 Scene::Scene()
 {
     map = NULL;
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
-    checkpoints = {2048}; // Define los puntos de control
     currentCheckpoint = 0; // Inicializa el índice del punto de control actual
     isAnimating = false; // Inicializa la variable de animación
     animationProgress = 0.0f; // Inicializa el progreso de la animación
@@ -54,52 +53,66 @@ void Scene::update(int deltaTime)
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
     {
         // Iniciar la animación de desplazamiento a la derecha
-        //isAnimating = true;
-        //animationProgress = 0.0f;
+        isAnimating = true;
+        animationProgress = 0.0f;
+        initialCamX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f; // Guardar la posición inicial de la cámara
         currentCheckpoint++;
-		followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+        followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
     }
 
     // Ejecutar la animación de desplazamiento a la derecha
     if (isAnimating)
     {
-        animationProgress += deltaTime*0.0001f; // Ajusta la velocidad de la animación
+        animationProgress += deltaTime * 0.002f; // Ajusta la velocidad de la animación
         if (animationProgress >= 1.0f)
         {
             animationProgress = 1.0f;
             isAnimating = false;
-            currentCheckpoint++;
-            followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
         }
     }
 
     // Calcular las coordenadas de la cámara
-    float camX = posPlayer.x - CAMERA_WIDTH / 2.0f;
-    float camY = posPlayer.y - CAMERA_HEIGHT / 2.0f;
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
 
     // Ajustar la lógica de la cámara según la variable followHorizontal
     if (followHorizontal)
     {
-        camY = 16.f; // Mantener la posición de la cámara en el eje y constante
+        if (currentCheckpoint == 0) camY = 16.f; // Mantener la posición de la cámara en el eje y constante
+        else if (currentCheckpoint == 2) camY = 1456.f;
+        else if (currentCheckpoint == 4) camY = 496.f;
+		if (camX < cameraLimits[currentCheckpoint].first)
+		{
+			camX = cameraLimits[currentCheckpoint].first;
+		}
+		else if (camX + CAMERA_WIDTH > cameraLimits[currentCheckpoint].second)
+		{
+			camX = cameraLimits[currentCheckpoint].second - CAMERA_WIDTH;
+		}
     }
     else
     {
-        camX = checkpoints[currentCheckpoint - 1] - 16.f;
+        camX = checkpoints[currentCheckpoint - 1] + 32.f;
+		if (camY < cameraLimits[currentCheckpoint].first)
+		{
+			camY = cameraLimits[currentCheckpoint].first;
+		}
+		else if (camY + CAMERA_HEIGHT > cameraLimits[currentCheckpoint].second)
+		{
+			camY = cameraLimits[currentCheckpoint].second - CAMERA_HEIGHT;
+		}
     }
 
     // Ajustar la posición de la cámara durante la animación
     if (isAnimating)
     {
-        camX = glm::mix(checkpoints[currentCheckpoint] - 16.0f, checkpoints[currentCheckpoint] + 240.0f - CAMERA_WIDTH, animationProgress);
+        camX = glm::mix(initialCamX, checkpoints[currentCheckpoint - 1] + 32.f, animationProgress);
     }
 
-    // Asegurarse de que la cámara no se mueva más allá del límite izquierdo
-    if (camX < 32) camX = 32;
-    float camX2 = posPlayer.x - CAMERA_WIDTH / 2.0f;
-    float camY2 = posPlayer.y - CAMERA_HEIGHT / 2.0f;
     // Ajustar la matriz de proyección para centrar la cámara en posPlayer
-    projection = glm::ortho(camX2, camX2 + CAMERA_WIDTH, camY2 + CAMERA_HEIGHT, camY2);
+    projection = glm::ortho(camX, camX + CAMERA_WIDTH, camY + CAMERA_HEIGHT, camY);
 }
+
 
 
 
