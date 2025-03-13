@@ -40,8 +40,6 @@ private:
 	Direction dir;
 	bool spear_visible;
 	float leftLimit;
-	bool first_attack;
-
 };
 
 

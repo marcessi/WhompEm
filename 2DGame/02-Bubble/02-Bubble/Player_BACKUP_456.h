@@ -39,9 +39,12 @@ private:
 	TileMap *mapWalls, *mapPlatforms;
 	Direction dir;
 	bool spear_visible;
-	float leftLimit;
+<<<<<<< HEAD
 	bool first_attack;
 
+=======
+	float leftLimit;
+>>>>>>> 02c83530c239855136cf81bf10d5559ac8fc5a1d
 };
 
 

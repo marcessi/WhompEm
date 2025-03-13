@@ -22,11 +22,10 @@ public:
 	void update(int deltaTime);
 	void render();
 	
-	void setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms);
+	void setTileMap(TileMap *tileMap);
 	void setPosition(const glm::vec2 &pos);
 	
 	glm::ivec2 getPosition();
-	void setLeftLimit(float leftLimit);
 	
 private:
 	bool bJumping;
@@ -35,11 +34,10 @@ private:
 	Texture spritesheet;
 	Sprite *sprite;
 	Texture spritesheet_lanza;
-	Sprite *sprite_lanza;
-	TileMap *mapWalls, *mapPlatforms;
+	Sprite* sprite_lanza;
+	TileMap *map;
 	Direction dir;
 	bool spear_visible;
-	float leftLimit;
 	bool first_attack;
 
 };

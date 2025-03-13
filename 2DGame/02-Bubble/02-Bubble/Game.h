@@ -6,9 +6,9 @@
 #include "Scene.h"
 
 
-#define SCREEN_WIDTH 640
-#define SCREEN_HEIGHT 480
-#define CAMERA_WIDTH 320
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 960
+#define CAMERA_WIDTH 256
 #define CAMERA_HEIGHT 240
 
 
