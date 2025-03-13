@@ -113,129 +113,166 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 void Player::update(int deltaTime)
 {
-	sprite_lanza->update(deltaTime);
-	sprite->update(deltaTime);
-	if(Game::instance().getKey(GLFW_KEY_LEFT))
-	{
-		dir = LEFT;
-		if (Game::instance().getKey(GLFW_KEY_X)) {
-			if (sprite->animation() != ATTACK_LEFT_MOVING)
-				sprite->changeAnimation(ATTACK_LEFT_MOVING);
-		}
-		else {
-			if (sprite->animation() != MOVE_LEFT)
-				sprite->changeAnimation(MOVE_LEFT);
-		}
-			
-		posPlayer.x -= 2;
-		if(map->collisionMoveLeft(posPlayer, glm::ivec2(32, 32)) || posPlayer.x < leftLimit)
-		{
-			posPlayer.x += 2;
-			sprite->changeAnimation(STAND_LEFT);
-		}
-	}
-	else if(Game::instance().getKey(GLFW_KEY_RIGHT))
-	{
-		dir = RIGHT;
-		if (Game::instance().getKey(GLFW_KEY_X)) {
-			if (sprite->animation() != ATTACK_RIGHT_MOVING)
-				sprite->changeAnimation(ATTACK_RIGHT_MOVING);
-		}
-		else {
-			if (sprite->animation() != MOVE_RIGHT)
-				sprite->changeAnimation(MOVE_RIGHT);
-		}
-		posPlayer.x += 2;
-		if(map->collisionMoveRight(posPlayer, glm::ivec2(32, 32)) || posPlayer.x > 4064.f)
-		{
-			posPlayer.x -= 2;
-			sprite->changeAnimation(STAND_RIGHT);
-		}
-	}
-	else if (Game::instance().getKey(GLFW_KEY_DOWN))
-	{
-		if (dir == LEFT) {
-			if (Game::instance().getKey(GLFW_KEY_X))
-				sprite->changeAnimation(ATTACK_DOWN_LEFT);
-			else
-				sprite->changeAnimation(DOWN_LEFT);
-		}
-		else if (dir == RIGHT) {
-			if (Game::instance().getKey(GLFW_KEY_X))
-				sprite->changeAnimation(ATTACK_DOWN_RIGHT);
-			else
-				sprite->changeAnimation(DOWN_RIGHT);
-		}
-	}
-	else if (Game::instance().getKey(GLFW_KEY_UP))
-	{
-		if (dir == LEFT)
-			sprite->changeAnimation(PROTECT_LEFT);
-		else if (dir == RIGHT)
-			sprite->changeAnimation(PROTECT_RIGHT);
-	}
-	else if (Game::instance().getKey(GLFW_KEY_X))
-	{
-		spear_visible = true;
-		if (dir == LEFT) {
-			sprite->changeAnimation(ATTACK_LEFT);
-			sprite_lanza->changeAnimation(THROW);
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y - 7)));
+    sprite_lanza->update(deltaTime);
+    sprite->update(deltaTime);
 
-		}
-			
-		else if (dir == RIGHT) {
-			sprite->changeAnimation(ATTACK_RIGHT);
-			
-			sprite_lanza->changeAnimation(THROW);
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y -7)));
+    // Guardar la posición previa para restaurarla en caso de colisión
+    glm::ivec2 prevPos = posPlayer;
 
-		}
-			
-	}
-	else
-	{
-		if(dir == LEFT)
-			sprite->changeAnimation(STAND_LEFT);
-		else if(dir == RIGHT)
-			sprite->changeAnimation(STAND_RIGHT);
-	}
-	
-	if(bJumping)
-	{
-		jumpAngle += JUMP_ANGLE_STEP;
-		if(jumpAngle == 180)
-		{
-			bJumping = false;
-			posPlayer.y = startY;
-		}
-		else
-		{
-			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
-			if(jumpAngle > 90)
-				bJumping = !map->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
-		}
-		if (dir == LEFT)
-			sprite->changeAnimation(JUMP_LEFT);
-		else
-			sprite->changeAnimation(JUMP_RIGHT);
+    // Manejar el movimiento horizontal
+    if (Game::instance().getKey(GLFW_KEY_LEFT))
+    {
+        dir = LEFT;
+        if (Game::instance().getKey(GLFW_KEY_X)) {
+            if (sprite->animation() != ATTACK_LEFT_MOVING)
+                sprite->changeAnimation(ATTACK_LEFT_MOVING);
+        }
+        else {
+            if (sprite->animation() != MOVE_LEFT)
+                sprite->changeAnimation(MOVE_LEFT);
+        }
 
-	}
-	else
-	{
-		spear_visible = false;
-		posPlayer.y += FALL_STEP;
-		if(map->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y))
-		{
-			if(Game::instance().getKey(GLFW_KEY_Z))
-			{
-				bJumping = true;
-				jumpAngle = 0;
-				startY = posPlayer.y;
-			}
-		}
-	}
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+        posPlayer.x -= 2;
+        // Solo comprobar colisiones con mapWalls, no con mapPlatforms
+        if (mapWalls->collisionMoveLeft(posPlayer, glm::ivec2(32, 32)) || posPlayer.x < leftLimit)
+        {
+            posPlayer.x = prevPos.x;
+            sprite->changeAnimation(STAND_LEFT);
+        }
+    }
+    else if (Game::instance().getKey(GLFW_KEY_RIGHT))
+    {
+        dir = RIGHT;
+        if (Game::instance().getKey(GLFW_KEY_X)) {
+            if (sprite->animation() != ATTACK_RIGHT_MOVING)
+                sprite->changeAnimation(ATTACK_RIGHT_MOVING);
+        }
+        else {
+            if (sprite->animation() != MOVE_RIGHT)
+                sprite->changeAnimation(MOVE_RIGHT);
+        }
+        posPlayer.x += 2;
+        // Solo comprobar colisiones con mapWalls, no con mapPlatforms
+        if (mapWalls->collisionMoveRight(posPlayer, glm::ivec2(32, 32)) || posPlayer.x > 4064.f)
+        {
+            posPlayer.x = prevPos.x;
+            sprite->changeAnimation(STAND_RIGHT);
+        }
+    }
+    else if (Game::instance().getKey(GLFW_KEY_DOWN))
+    {
+        if (dir == LEFT) {
+            if (Game::instance().getKey(GLFW_KEY_X))
+                sprite->changeAnimation(ATTACK_DOWN_LEFT);
+            else
+                sprite->changeAnimation(DOWN_LEFT);
+        }
+        else if (dir == RIGHT) {
+            if (Game::instance().getKey(GLFW_KEY_X))
+                sprite->changeAnimation(ATTACK_DOWN_RIGHT);
+            else
+                sprite->changeAnimation(DOWN_RIGHT);
+        }
+    }
+    else if (Game::instance().getKey(GLFW_KEY_UP))
+    {
+        if (dir == LEFT)
+            sprite->changeAnimation(PROTECT_LEFT);
+        else if (dir == RIGHT)
+            sprite->changeAnimation(PROTECT_RIGHT);
+    }
+    else if (Game::instance().getKey(GLFW_KEY_X))
+    {
+        spear_visible = true;
+        if (dir == LEFT) {
+            sprite->changeAnimation(ATTACK_LEFT);
+            sprite_lanza->changeAnimation(THROW);
+            sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y - 7)));
+        }
+        else if (dir == RIGHT) {
+            sprite->changeAnimation(ATTACK_RIGHT);
+            sprite_lanza->changeAnimation(THROW);
+            sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y - 7)));
+        }
+    }
+    else
+    {
+        if (dir == LEFT)
+            sprite->changeAnimation(STAND_LEFT);
+        else if (dir == RIGHT)
+            sprite->changeAnimation(STAND_RIGHT);
+    }
+
+    // Manejar el salto y la caída
+    if (bJumping)
+    {
+        jumpAngle += JUMP_ANGLE_STEP;
+        if (jumpAngle == 180)
+        {
+            bJumping = false;
+            posPlayer.y = startY;
+        }
+        else
+        {
+            // Guardar posición Y antes de saltar
+            int prevY = posPlayer.y;
+
+            // Calcular nueva posición Y
+            posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+
+            // Verificar si el jugador está subiendo o bajando
+            bool movingDown = posPlayer.y > prevY;
+
+            // En la fase descendente, comprobar colisión abajo
+            if (jumpAngle > 90) {
+                // Primero comprobar colisiones con paredes sólidas (mapWalls)
+                if (mapWalls->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y)) {
+                    bJumping = false;
+                }
+                // Luego comprobar colisiones con plataformas solo si está cayendo
+                else if (movingDown && mapPlatforms->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y)) {
+                    bJumping = false;
+                }
+            }
+        }
+
+        if (dir == LEFT)
+            sprite->changeAnimation(JUMP_LEFT);
+        else
+            sprite->changeAnimation(JUMP_RIGHT);
+    }
+    else
+    {
+        spear_visible = false;
+        int prevY = posPlayer.y; // Guardamos la posición Y antes de caer
+        posPlayer.y += FALL_STEP;
+
+        // Verificar que el jugador está cayendo
+        bool isFalling = posPlayer.y > prevY;
+
+        // Primero comprobar colisiones con paredes sólidas (mapWalls)
+        bool collisionWithWalls = mapWalls->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
+
+        // Luego comprobar colisiones con plataformas solo si está cayendo
+        bool collisionWithPlatforms = false;
+        if (isFalling) {
+            // Solo verificar colisión con plataformas si está cayendo y si el punto de partida está por encima de la plataforma
+            collisionWithPlatforms = mapPlatforms->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
+        }
+
+        // Comprobar colisiones con el suelo
+        if (collisionWithWalls || collisionWithPlatforms)
+        {
+            if (Game::instance().getKey(GLFW_KEY_Z))
+            {
+                bJumping = true;
+                jumpAngle = 0;
+                startY = posPlayer.y;
+            }
+        }
+    }
+
+    sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 }
 
 void Player::render()
@@ -244,9 +281,10 @@ void Player::render()
 	if(spear_visible) sprite_lanza->render();
 }
 
-void Player::setTileMap(TileMap *tileMap)
+void Player::setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms)
 {
-	map = tileMap;
+	mapWalls = tileMapWalls;
+	mapPlatforms = tileMapPlatforms;
 }
 
 void Player::setPosition(const glm::vec2 &pos)

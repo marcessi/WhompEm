@@ -22,7 +22,7 @@ public:
 	void update(int deltaTime);
 	void render();
 	
-	void setTileMap(TileMap *tileMap);
+	void setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms);
 	void setPosition(const glm::vec2 &pos);
 	
 	glm::ivec2 getPosition();
@@ -35,8 +35,8 @@ private:
 	Texture spritesheet;
 	Sprite *sprite;
 	Texture spritesheet_lanza;
-	Sprite* sprite_lanza;
-	TileMap *map;
+	Sprite *sprite_lanza;
+	TileMap *mapWalls, *mapPlatforms;
 	Direction dir;
 	bool spear_visible;
 	float leftLimit;
