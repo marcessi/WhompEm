@@ -8,12 +8,14 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 205 /*2 123 131 205*/
-#define INIT_PLAYER_Y_TILES 33 /*10 3 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 33*/
 
 Scene::Scene()
 {
     mapWalls = NULL;
+	mapBackground = NULL;
+	mapPlatforms = NULL;
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
     currentCheckpoint = 0; // Inicializa el índice del punto de control actual
