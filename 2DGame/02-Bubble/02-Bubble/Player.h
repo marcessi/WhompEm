@@ -38,6 +38,7 @@ private:
 	TileMap *map;
 	Direction dir;
 	bool spear_visible;
+	bool first_attack;
 
 };
 

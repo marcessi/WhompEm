@@ -16,11 +16,12 @@ enum PlayerAnims
 };
 
 enum LanzaActions {
-	THROW, STAND
+	THROW_LEFT, STANDS_LEFT, THROW_RIGHT, STANDS_RIGHT
 };
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	first_attack = false;
 	spear_visible = false;
 	bJumping = false;
 	spritesheet.loadFromFile("images/soaring_eagle4.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -87,39 +88,122 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.0f, 0.f));
 
 
-		spritesheet_lanza.loadFromFile("images/lanza.png", TEXTURE_PIXEL_FORMAT_RGBA);
-		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.5, 0.33), &spritesheet_lanza, &shaderProgram);
-		sprite_lanza->setNumberAnimations(2);
+		spritesheet_lanza.loadFromFile("images/lanzas.png", TEXTURE_PIXEL_FORMAT_RGBA);
+		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.33, 0.25), &spritesheet_lanza, &shaderProgram);
+		sprite_lanza->setNumberAnimations(4);
 
-		sprite_lanza->setAnimationSpeed(THROW, 30);
-		sprite_lanza->addKeyframe(THROW, glm::vec2(0.f, 0.f));
-		sprite_lanza->addKeyframe(THROW, glm::vec2(0.5f, 0.33f));
-		sprite_lanza->addKeyframe(THROW, glm::vec2(5.f, 0.33f));
+		sprite_lanza->setAnimationSpeed(THROW_LEFT, 30);
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.33f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.f, 0.75f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.33f, 0.f));
 
-		sprite_lanza->setAnimationSpeed(STAND, 8);
-		sprite_lanza->addKeyframe(STAND, glm::vec2(0.f, 0.f));
+		sprite_lanza->setAnimationSpeed(STANDS_LEFT, 8);
+		sprite_lanza->addKeyframe(STANDS_LEFT, glm::vec2(0.33f, 0.f));
 
+		sprite_lanza->setAnimationSpeed(THROW_RIGHT, 30);
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
 
+		sprite_lanza->setAnimationSpeed(STANDS_RIGHT, 8);
+		sprite_lanza->addKeyframe(STANDS_RIGHT, glm::vec2(0.f, 0.f));
 		
 	sprite->changeAnimation(0);
 	tileMapDispl = tileMapPos;
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 
 	sprite_lanza->changeAnimation(0);
-	sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x +32), float(tileMapDispl.y + posPlayer.y + -7)));
 	
 }
 
 void Player::update(int deltaTime)
 {
+	
 	sprite_lanza->update(deltaTime);
 	sprite->update(deltaTime);
-	if(Game::instance().getKey(GLFW_KEY_LEFT))
+	if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+		if (dir == LEFT) {
+			if (Game::instance().getKey(GLFW_KEY_X)) {
+				if(sprite -> animation() != ATTACK_DOWN_LEFT)sprite->changeAnimation(ATTACK_DOWN_LEFT);
+				spear_visible = true;
+
+				if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+					sprite_lanza->changeAnimation(THROW_LEFT);
+				}
+				else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+					first_attack = true;
+					sprite_lanza->changeAnimation(STANDS_LEFT);
+				}
+				else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+					sprite_lanza->changeAnimation(STANDS_LEFT);
+				}
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18)));
+
+			}
+				
+			else
+				sprite->changeAnimation(DOWN_LEFT);
+		}
+		else if (dir == RIGHT) {
+			if (Game::instance().getKey(GLFW_KEY_X)) {
+				if(sprite -> animation() != ATTACK_DOWN_RIGHT) sprite->changeAnimation(ATTACK_DOWN_RIGHT);
+				spear_visible = true;
+
+				if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+
+					sprite_lanza->changeAnimation(THROW_RIGHT);
+				}
+				else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+
+					first_attack = true;
+					sprite_lanza->changeAnimation(STANDS_RIGHT);
+				}
+				else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+					first_attack = true;
+					sprite_lanza->changeAnimation(STANDS_RIGHT);
+				}
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 19)));
+
+			}
+				
+			else
+				sprite->changeAnimation(DOWN_RIGHT);
+		}
+	}
+	else if(Game::instance().getKey(GLFW_KEY_LEFT))
 	{
+		
 		dir = LEFT;
 		if (Game::instance().getKey(GLFW_KEY_X)) {
+			spear_visible = true;
 			if (sprite->animation() != ATTACK_LEFT_MOVING)
 				sprite->changeAnimation(ATTACK_LEFT_MOVING);
+				
+			if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+				sprite_lanza->changeAnimation(THROW_LEFT);
+			}
+			else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+				first_attack = true;
+				sprite_lanza->changeAnimation(STANDS_LEFT);
+			}
+			else if(sprite_lanza -> animation() != THROW_LEFT && sprite_lanza -> animation() != STANDS_LEFT){
+				sprite_lanza->changeAnimation(STANDS_LEFT);
+			}
+
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
+
 		}
 		else {
 			if (sprite->animation() != MOVE_LEFT)
@@ -135,10 +219,26 @@ void Player::update(int deltaTime)
 	}
 	else if(Game::instance().getKey(GLFW_KEY_RIGHT))
 	{
+		
 		dir = RIGHT;
 		if (Game::instance().getKey(GLFW_KEY_X)) {
+			spear_visible = true;
 			if (sprite->animation() != ATTACK_RIGHT_MOVING)
 				sprite->changeAnimation(ATTACK_RIGHT_MOVING);
+			if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+				
+				sprite_lanza->changeAnimation(THROW_RIGHT);
+			}
+			else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+				
+				first_attack = true;
+				sprite_lanza->changeAnimation(STANDS_RIGHT);
+			}
+			else if(sprite_lanza->animation() != THROW_RIGHT && sprite_lanza -> animation() != STANDS_RIGHT){
+				first_attack = true;
+				sprite_lanza->changeAnimation(STANDS_RIGHT);
+			}
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 11)));
 		}
 		else {
 			if (sprite->animation() != MOVE_RIGHT)
@@ -149,21 +249,6 @@ void Player::update(int deltaTime)
 		{
 			posPlayer.x -= 2;
 			sprite->changeAnimation(STAND_RIGHT);
-		}
-	}
-	else if (Game::instance().getKey(GLFW_KEY_DOWN))
-	{
-		if (dir == LEFT) {
-			if (Game::instance().getKey(GLFW_KEY_X))
-				sprite->changeAnimation(ATTACK_DOWN_LEFT);
-			else
-				sprite->changeAnimation(DOWN_LEFT);
-		}
-		else if (dir == RIGHT) {
-			if (Game::instance().getKey(GLFW_KEY_X))
-				sprite->changeAnimation(ATTACK_DOWN_RIGHT);
-			else
-				sprite->changeAnimation(DOWN_RIGHT);
 		}
 	}
 	else if (Game::instance().getKey(GLFW_KEY_UP))
@@ -177,27 +262,51 @@ void Player::update(int deltaTime)
 	{
 		spear_visible = true;
 		if (dir == LEFT) {
-			sprite->changeAnimation(ATTACK_LEFT);
-			sprite_lanza->changeAnimation(THROW);
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y - 7)));
+			if (sprite->animation() != ATTACK_LEFT) sprite->changeAnimation(ATTACK_LEFT);
 
+			if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+				sprite_lanza->changeAnimation(THROW_LEFT);
+			}
+			else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+				first_attack = true;
+				sprite_lanza->changeAnimation(STANDS_LEFT);
+			}
+
+
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
 		}
-			
 		else if (dir == RIGHT) {
-			sprite->changeAnimation(ATTACK_RIGHT);
-			
-			sprite_lanza->changeAnimation(THROW);
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 32), float(tileMapDispl.y + posPlayer.y -7)));
+			if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
 
+			if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+				sprite_lanza->changeAnimation(THROW_RIGHT);
+			}
+			else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+				first_attack = true;
+				sprite_lanza->changeAnimation(STANDS_RIGHT);
+			}
+
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 11)));
 		}
 			
 	}
 	else
 	{
+		
 		if(dir == LEFT)
 			sprite->changeAnimation(STAND_LEFT);
 		else if(dir == RIGHT)
 			sprite->changeAnimation(STAND_RIGHT);
+	}
+
+	if (spear_visible)
+	{
+		
+		if (!Game::instance().getKey(GLFW_KEY_X))
+		{
+			spear_visible = false;
+			first_attack = false;
+		}
 	}
 	
 	if(bJumping)
@@ -222,7 +331,7 @@ void Player::update(int deltaTime)
 	}
 	else
 	{
-		spear_visible = false;
+		
 		posPlayer.y += FALL_STEP;
 		if(map->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y))
 		{
@@ -240,7 +349,7 @@ void Player::update(int deltaTime)
 void Player::render()
 {
 	sprite->render();
-	if(spear_visible) sprite_lanza->render();
+	if(spear_visible)sprite_lanza->render();
 }
 
 void Player::setTileMap(TileMap *tileMap)
