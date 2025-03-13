@@ -26,6 +26,7 @@ public:
 	void setPosition(const glm::vec2 &pos);
 	
 	glm::ivec2 getPosition();
+	void setLeftLimit(float leftLimit);
 	
 private:
 	bool bJumping;
@@ -38,7 +39,7 @@ private:
 	TileMap *map;
 	Direction dir;
 	bool spear_visible;
-
+	float leftLimit;
 };
 
 

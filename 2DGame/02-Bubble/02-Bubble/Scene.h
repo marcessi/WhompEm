@@ -23,6 +23,9 @@ public:
 	void update(int deltaTime);
 	void render();
 
+	int getCurrentCheckpoint();
+	float getCameraLimit();
+
 private:
 	void initShaders();
 

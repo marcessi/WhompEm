@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 4 /*4 123 131 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 33*/
+#define INIT_PLAYER_X_TILES 131 /*4 123 131 205*/
+#define INIT_PLAYER_Y_TILES 99 /*10 3 99 33*/
 
 Scene::Scene()
 {
@@ -56,6 +56,7 @@ void Scene::update(int deltaTime)
         isAnimating = true;
         animationProgress = 0.0f;
         initialCamX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f; // Guardar la posición inicial de la cámara
+        player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
         followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
     }
@@ -161,3 +162,12 @@ void Scene::initShaders()
     fShader.free();
 }
 
+int Scene::getCurrentCheckpoint()
+{
+	return currentCheckpoint;
+}
+
+float Scene::getCameraLimit()
+{
+	return cameraLimits[currentCheckpoint].first;
+}

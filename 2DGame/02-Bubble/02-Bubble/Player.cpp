@@ -23,6 +23,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
 	spear_visible = false;
 	bJumping = false;
+	leftLimit = 0.f;
 	spritesheet.loadFromFile("images/soaring_eagle4.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.2, 0.2), &spritesheet, &shaderProgram);
 	sprite->setNumberAnimations(17);
@@ -127,7 +128,7 @@ void Player::update(int deltaTime)
 		}
 			
 		posPlayer.x -= 2;
-		if(map->collisionMoveLeft(posPlayer, glm::ivec2(32, 32)))
+		if(map->collisionMoveLeft(posPlayer, glm::ivec2(32, 32)) || posPlayer.x < leftLimit)
 		{
 			posPlayer.x += 2;
 			sprite->changeAnimation(STAND_LEFT);
@@ -145,7 +146,7 @@ void Player::update(int deltaTime)
 				sprite->changeAnimation(MOVE_RIGHT);
 		}
 		posPlayer.x += 2;
-		if(map->collisionMoveRight(posPlayer, glm::ivec2(32, 32)))
+		if(map->collisionMoveRight(posPlayer, glm::ivec2(32, 32)) || posPlayer.x > 4064.f)
 		{
 			posPlayer.x -= 2;
 			sprite->changeAnimation(STAND_RIGHT);
@@ -259,5 +260,8 @@ glm::ivec2 Player::getPosition()
 	return posPlayer;
 }
 
-
+void Player::setLeftLimit(float leftLimit)
+{
+	this->leftLimit = leftLimit;
+}
 
