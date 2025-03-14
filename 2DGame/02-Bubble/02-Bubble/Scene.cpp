@@ -20,6 +20,7 @@ Scene::Scene()
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
     currentCheckpoint = 0; // Inicializa el índice del punto de control actual
     isAnimating = false; // Inicializa la variable de animación
+    bossCam = false;
     animationProgress = 0.0f; // Inicializa el progreso de la animación
 }
 
@@ -62,6 +63,7 @@ void Scene::update(int deltaTime)
         player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
         followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+        if (currentCheckpoint == 5) bossCam = true;
     }
 
     // Ejecutar la animación de desplazamiento a la derecha
@@ -79,32 +81,39 @@ void Scene::update(int deltaTime)
     float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
     float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
 
-    // Ajustar la lógica de la cámara según la variable followHorizontal
-    if (followHorizontal)
-    {
-        if (currentCheckpoint == 0) camY = 16.f; // Mantener la posición de la cámara en el eje y constante
-        else if (currentCheckpoint == 2) camY = 1456.f;
-        else if (currentCheckpoint == 4) camY = 496.f;
-		if (camX < cameraLimits[currentCheckpoint].first)
-		{
-			camX = cameraLimits[currentCheckpoint].first;
-		}
-		else if (camX + CAMERA_WIDTH > cameraLimits[currentCheckpoint].second)
-		{
-			camX = cameraLimits[currentCheckpoint].second - CAMERA_WIDTH;
-		}
+    if (!bossCam) {
+        // Ajustar la lógica de la cámara según la variable followHorizontal
+        if (followHorizontal)
+        {
+            if (currentCheckpoint == 0) camY = 16.f; // Mantener la posición de la cámara en el eje y constante
+            else if (currentCheckpoint == 2) camY = 1456.f;
+            else if (currentCheckpoint == 4) camY = 496.f;
+            if (camX < cameraLimits[currentCheckpoint].first)
+            {
+                camX = cameraLimits[currentCheckpoint].first;
+            }
+            else if (camX + CAMERA_WIDTH > cameraLimits[currentCheckpoint].second)
+            {
+                camX = cameraLimits[currentCheckpoint].second - CAMERA_WIDTH;
+            }
+        }
+        else
+        {
+            camX = checkpoints[currentCheckpoint - 1] + 32.f;
+            if (camY < cameraLimits[currentCheckpoint].first)
+            {
+                camY = cameraLimits[currentCheckpoint].first;
+            }
+            else if (camY + CAMERA_HEIGHT > cameraLimits[currentCheckpoint].second)
+            {
+                camY = cameraLimits[currentCheckpoint].second - CAMERA_HEIGHT;
+            }
+        }
+
     }
-    else
-    {
+    else {
         camX = checkpoints[currentCheckpoint - 1] + 32.f;
-		if (camY < cameraLimits[currentCheckpoint].first)
-		{
-			camY = cameraLimits[currentCheckpoint].first;
-		}
-		else if (camY + CAMERA_HEIGHT > cameraLimits[currentCheckpoint].second)
-		{
-			camY = cameraLimits[currentCheckpoint].second - CAMERA_HEIGHT;
-		}
+		camY = 496.f;
     }
 
     // Ajustar la posición de la cámara durante la animación
