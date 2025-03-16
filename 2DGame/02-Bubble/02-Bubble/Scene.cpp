@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
@@ -26,32 +26,90 @@ Scene::Scene()
 
 Scene::~Scene()
 {
-	if(mapWalls != NULL)
-		delete mapWalls;
-	if(player != NULL)
-		delete player;
-}
+    if (mapWalls != NULL)
+        delete mapWalls;
+    if (mapBackground != NULL)
+        delete mapBackground;
+    if (mapPlatforms != NULL)
+        delete mapPlatforms;
+    if (player != NULL)
+        delete player;
 
+    // Liberar la memoria de las plataformas móviles
+    for (auto platform : movingPlatforms) {
+        delete platform;
+    }
+    movingPlatforms.clear();
+}
 
 void Scene::init()
 {
-	initShaders();
-	mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+    initShaders();
+    mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
-	mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
-	player = new Player();
-	player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-	player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
-	player->setTileMap(mapWalls,mapPlatforms);
-	projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
-	currentTime = 0.0f;
+    mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+    player = new Player();
+    player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+    player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
+    player->setTileMap(mapWalls, mapPlatforms);
+
+    // Inicializar las plataformas móviles
+    // Plataforma 1
+    MovingPlatform* platform1 = new MovingPlatform();
+    platform1->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+    platform1->setPosition(glm::vec2(3175, 736));
+    platform1->setMovementLimits(656, 768);
+    platform1->setSpeed(5.5f);
+    movingPlatforms.push_back(platform1);
+
+    // Plataforma 2
+    MovingPlatform* platform2 = new MovingPlatform();
+    platform2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+    platform2->setPosition(glm::vec2(3143, 784));
+    platform2->setMovementLimits(736, 816);
+    platform2->setSpeed(5.f);
+    movingPlatforms.push_back(platform2);
+
+    // Plataforma 3
+    MovingPlatform* platform3 = new MovingPlatform();
+    platform3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+    platform3->setPosition(glm::vec2(3207, 592));
+    platform3->setMovementLimits(576, 688);
+    platform3->setSpeed(4.5f);
+    movingPlatforms.push_back(platform3);
+
+	// Plataforma 4
+	MovingPlatform* platform4 = new MovingPlatform();
+	platform4->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+	platform4->setPosition(glm::vec2(3232, 816));
+	platform4->setMovementLimits(720, 816);
+	platform4->setSpeed(4.5f);
+	movingPlatforms.push_back(platform4);
+
+	// Plataforma 5
+	MovingPlatform* platform5 = new MovingPlatform();
+	platform5->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+	platform5->setPosition(glm::vec2(3143, 576));
+	platform5->setMovementLimits(576, 672);
+	platform5->setSpeed(5.0f);
+	movingPlatforms.push_back(platform5);
+
+    player->setMovingPlatforms(&movingPlatforms);
+    projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
+    currentTime = 0.0f;
 }
+
 
 void Scene::update(int deltaTime)
 {
     currentTime += deltaTime;
     player->update(deltaTime);
     glm::ivec2 posPlayer = player->getPosition();
+
+    // Actualizar las plataformas móviles
+    for (auto platform : movingPlatforms) {
+        platform->update(deltaTime);
+    }
 
     // Verificar si el jugador ha alcanzado el punto de control actual
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
@@ -126,9 +184,6 @@ void Scene::update(int deltaTime)
     projection = glm::ortho(camX, camX + CAMERA_WIDTH, camY + CAMERA_HEIGHT, camY);
 }
 
-
-
-
 void Scene::render()
 {
     glm::mat4 modelview;
@@ -141,7 +196,13 @@ void Scene::render()
     texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
     mapBackground->render();
     mapWalls->render();
-	mapPlatforms->render();
+    mapPlatforms->render();
+
+    // Renderizar las plataformas móviles
+    for (auto platform : movingPlatforms) {
+        platform->render();
+    }
+
     player->render();
 }
 

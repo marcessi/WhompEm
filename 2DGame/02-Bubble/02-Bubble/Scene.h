@@ -1,16 +1,18 @@
 #ifndef _SCENE_INCLUDE
 #define _SCENE_INCLUDE
 
-
 #include <glm/glm.hpp>
+#include <vector>
 #include "ShaderProgram.h"
 #include "TileMap.h"
 #include "Player.h"
+#include "MovingPlatform.h" // Nueva inclusión
 
+#define CAMERA_WIDTH 640
+#define CAMERA_HEIGHT 480
 
 // Scene contains all the entities of our game.
 // It is responsible for updating and render them.
-
 
 class Scene
 {
@@ -30,18 +32,23 @@ private:
 	void initShaders();
 
 private:
-	TileMap *mapWalls, *mapBackground, *mapPlatforms;
-	Player *player;
+	TileMap* mapWalls;
+	TileMap* mapBackground;
+	TileMap* mapPlatforms;
+	Player* player;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
-	bool animationCompleted;
-	bool followHorizontal; // Variable para controlar si la cámara sigue horizontalmente o verticalmente
 
-	int currentCheckpoint; // Índice del punto de control actual
-	bool isAnimating; // Variable para controlar si el jugador está en movimiento
+	// Plataformas móviles
+	std::vector<MovingPlatform*> movingPlatforms;
+
+	// Variables de cámara
+	bool followHorizontal;
+	int currentCheckpoint;
+	bool isAnimating;
 	bool bossCam;
-	float animationProgress; // Variable para controlar el progreso de la animación
+	float animationProgress;
 	float initialCamX;
 
 	const std::vector<float> checkpoints = { 2048.f, 2304.f ,3072.f, 3312.f, 3840.f }; // Lista de puntos de control
@@ -49,6 +56,4 @@ private:
 
 };
 
-
 #endif // _SCENE_INCLUDE
-
