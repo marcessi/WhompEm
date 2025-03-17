@@ -4,13 +4,12 @@
 
 using namespace std;
 
-
 Texture::Texture()
 {
 	wrapS = GL_REPEAT;
 	wrapT = GL_REPEAT;
-	minFilter = GL_LINEAR_MIPMAP_LINEAR;
-	magFilter = GL_LINEAR_MIPMAP_LINEAR;
+	minFilter = GL_NEAREST;       // Cambiado de GL_LINEAR_MIPMAP_LINEAR
+	magFilter = GL_NEAREST;       // Cambiado de GL_LINEAR_MIPMAP_LINEAR
 }
 
 

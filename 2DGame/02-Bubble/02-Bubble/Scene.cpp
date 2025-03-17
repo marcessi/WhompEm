@@ -59,7 +59,7 @@ void Scene::init()
     platform1->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
     platform1->setPosition(glm::vec2(3175, 736));
     platform1->setMovementLimits(656, 768);
-    platform1->setSpeed(5.5f);
+    platform1->setSpeed(6.f);
     movingPlatforms.push_back(platform1);
 
     // Plataforma 2
@@ -67,7 +67,7 @@ void Scene::init()
     platform2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
     platform2->setPosition(glm::vec2(3143, 784));
     platform2->setMovementLimits(736, 816);
-    platform2->setSpeed(5.f);
+    platform2->setSpeed(5.5f);
     movingPlatforms.push_back(platform2);
 
     // Plataforma 3
@@ -75,7 +75,7 @@ void Scene::init()
     platform3->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
     platform3->setPosition(glm::vec2(3207, 592));
     platform3->setMovementLimits(576, 688);
-    platform3->setSpeed(4.5f);
+    platform3->setSpeed(5.f);
     movingPlatforms.push_back(platform3);
 
 	// Plataforma 4
@@ -83,7 +83,7 @@ void Scene::init()
 	platform4->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
 	platform4->setPosition(glm::vec2(3232, 816));
 	platform4->setMovementLimits(720, 816);
-	platform4->setSpeed(4.5f);
+	platform4->setSpeed(5.f);
 	movingPlatforms.push_back(platform4);
 
 	// Plataforma 5
@@ -91,7 +91,7 @@ void Scene::init()
 	platform5->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
 	platform5->setPosition(glm::vec2(3143, 576));
 	platform5->setMovementLimits(576, 672);
-	platform5->setSpeed(5.0f);
+	platform5->setSpeed(5.5f);
 	movingPlatforms.push_back(platform5);
 
     player->setMovingPlatforms(&movingPlatforms);
