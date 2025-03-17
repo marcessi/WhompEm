@@ -4,13 +4,13 @@
 
 using namespace std;
 
-
 Texture::Texture()
 {
 	wrapS = GL_REPEAT;
 	wrapT = GL_REPEAT;
 	minFilter = GL_NEAREST;
 	magFilter = GL_NEAREST;
+
 }
 
 
