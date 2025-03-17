@@ -58,7 +58,7 @@ void MovingPlatform::render() const
     sprite->render();
 }
 
-bool MovingPlatform::collisionMoveDown(const glm::ivec2& pos, const glm::ivec2& actorSize, int* posY) const
+bool MovingPlatform::collisionMoveDown(const glm::ivec2& pos, const glm::ivec2& actorSize, float* posY) const
 {
     // Verificar si el actor está directamente sobre la plataforma
     int actorLeft = pos.x;

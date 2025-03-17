@@ -7,7 +7,7 @@
 
 #define JUMP_ANGLE_STEP 4
 #define JUMP_HEIGHT 50
-#define FALL_STEP 4
+#define FALL_STEP 3
 
 
 enum PlayerAnims
@@ -138,6 +138,10 @@ void Player::update(int deltaTime)
     // Guardar la posición previa para restaurarla en caso de colisión
     glm::ivec2 prevPos = posPlayer;
 
+	int hitboxWidth = 16;
+	int hitboxHeight = 32;
+	int hitboxOffsetX = (32 - hitboxWidth) / 2;
+
 	if (Game::instance().getKey(GLFW_KEY_DOWN))
 	{
 		if (Game::instance().getKey(GLFW_KEY_LEFT)) {
@@ -236,12 +240,13 @@ void Player::update(int deltaTime)
 		}
 
         posPlayer.x -= 2;
-        // Solo comprobar colisiones con mapWalls, no con mapPlatforms
-        if (mapWalls->collisionMoveLeft(posPlayer, glm::ivec2(32, 32)) || posPlayer.x < leftLimit)
-        {
-            posPlayer.x = prevPos.x;
-            sprite->changeAnimation(STAND_LEFT);
-        }
+
+		if (mapWalls->collisionMoveLeft(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+			glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x < leftLimit)
+		{
+			posPlayer.x = prevPos.x;
+			sprite->changeAnimation(STAND_LEFT);
+		}
     }
     else if (Game::instance().getKey(GLFW_KEY_RIGHT))
     {
@@ -271,11 +276,12 @@ void Player::update(int deltaTime)
 		}
         posPlayer.x += 2;
         // Solo comprobar colisiones con mapWalls, no con mapPlatforms
-        if (mapWalls->collisionMoveRight(posPlayer, glm::ivec2(32, 32)) || posPlayer.x > 4064.f)
-        {
-            posPlayer.x = prevPos.x;
-            sprite->changeAnimation(STAND_RIGHT);
-        }
+		if (mapWalls->collisionMoveRight(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+			glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x > 4064.f)
+		{
+			posPlayer.x = prevPos.x;
+			sprite->changeAnimation(STAND_RIGHT);
+		}
     }
     else if (Game::instance().getKey(GLFW_KEY_X))
     {
@@ -326,98 +332,105 @@ void Player::update(int deltaTime)
 		}
 	}
 
-		if (bJumping)
+	if (bJumping)
+	{
+		jumpAngle += JUMP_ANGLE_STEP;
+		if (jumpAngle == 180)
 		{
-			jumpAngle += JUMP_ANGLE_STEP;
-			if (jumpAngle == 180)
-			{
-				bJumping = false;
-				posPlayer.y = startY;
-			}
-			else
-			{
-				// Guardar posición Y antes de saltar
-				int prevY = posPlayer.y;
+			bJumping = false;
+			posPlayer.y = startY;
+		}
+		else
+		{
+			// Guardar posición Y antes de saltar
+			int prevY = posPlayer.y;
 
-				// Calcular nueva posición Y
-				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+			// Calcular nueva posición Y
+			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
 
-				// Verificar si el jugador está subiendo o bajando
-				bool movingDown = posPlayer.y > prevY;
+			// Verificar si el jugador está subiendo o bajando
+			bool movingDown = posPlayer.y > prevY;
 
-				// En la fase descendente, comprobar colisión abajo
-				if (jumpAngle > 90) {
-					// Primero comprobar colisiones con paredes sólidas (mapWalls)
-					if (mapWalls->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y)) {
-						bJumping = false;
-					}
-					// Luego comprobar colisiones con plataformas solo si está cayendo
-					else if (movingDown && mapPlatforms->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y)) {
-						bJumping = false;
-					}
-					// Finalmente, comprobar colisiones con plataformas móviles
-					else if (movingDown && movingPlatforms != nullptr) {
-						for (auto platform : *movingPlatforms) {
-							int tempPosY = posPlayer.y;
-							if (platform->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &tempPosY)) {
-								posPlayer.y = tempPosY;
-								bJumping = false;
-								break;
-							}
+			// En la fase descendente, comprobar colisión abajo
+			if (jumpAngle > 90) {
+				// Primero comprobar colisiones con paredes sólidas (mapWalls)
+				if (mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+					bJumping = false;
+				}
+				// Luego comprobar colisiones con plataformas solo si está cayendo
+				else if (movingDown && mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+					bJumping = false;
+				}
+				// Finalmente, comprobar colisiones con plataformas móviles
+				else if (movingDown && movingPlatforms != nullptr) {
+					for (auto platform : *movingPlatforms) {
+						float tempPosY = posPlayer.y;
+						if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+							glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
+							posPlayer.y = tempPosY;
+							bJumping = false;
+							break;
 						}
 					}
 				}
 			}
-
-			if (dir == LEFT)
-				sprite->changeAnimation(JUMP_LEFT);
-			else
-				sprite->changeAnimation(JUMP_RIGHT);
 		}
+
+		if (dir == LEFT)
+			sprite->changeAnimation(JUMP_LEFT);
 		else
-		{
-			int prevY = posPlayer.y; // Guardamos la posición Y antes de caer
-			posPlayer.y += FALL_STEP;
+			sprite->changeAnimation(JUMP_RIGHT);
+	}
+	else
+	{
+		int prevY = posPlayer.y; // Guardamos la posición Y antes de caer
+		posPlayer.y += FALL_STEP;
 
-			// Verificar que el jugador está cayendo
-			bool isFalling = posPlayer.y > prevY;
+		// Verificar que el jugador está cayendo
+		bool isFalling = posPlayer.y > prevY;
 
-			// Primero comprobar colisiones con paredes sólidas (mapWalls)
-			bool collisionWithWalls = mapWalls->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
+		// Primero comprobar colisiones con paredes sólidas (mapWalls)
+		bool collisionWithWalls = mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+			glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y);
 
-			// Luego comprobar colisiones con plataformas estáticas solo si está cayendo
-			bool collisionWithPlatforms = false;
-			if (isFalling) {
-				collisionWithPlatforms = mapPlatforms->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
-			}
+		// Luego comprobar colisiones con plataformas estáticas solo si está cayendo
+		bool collisionWithPlatforms = false;
+		if (isFalling) {
+			collisionWithPlatforms = mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+				glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y);
+		}
 
-			// Comprobar colisiones con plataformas móviles
-			bool collisionWithMovingPlatforms = false;
-			if (isFalling && movingPlatforms != nullptr) {
-				for (auto platform : *movingPlatforms) {
-					int tempPosY = posPlayer.y;
-					if (platform->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &tempPosY)) {
-						posPlayer.y = tempPosY;
-						collisionWithMovingPlatforms = true;
-						break;
-					}
-				}
-			}
-
-			// Comprobar colisiones con el suelo
-			if (collisionWithWalls || collisionWithPlatforms || collisionWithMovingPlatforms)
-			{
-				if (Game::instance().getKey(GLFW_KEY_Z))
-				{
-					bJumping = true;
-					jumpAngle = 0;
-					startY = posPlayer.y;
+		// Comprobar colisiones con plataformas móviles
+		bool collisionWithMovingPlatforms = false;
+		if (isFalling && movingPlatforms != nullptr) {
+			for (auto platform : *movingPlatforms) {
+				float tempPosY = posPlayer.y;
+				if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
+					posPlayer.y = tempPosY;
+					collisionWithMovingPlatforms = true;
+					break;
 				}
 			}
 		}
 
-		sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+		// Comprobar colisiones con el suelo
+		if (collisionWithWalls || collisionWithPlatforms || collisionWithMovingPlatforms)
+		{
+			if (Game::instance().getKey(GLFW_KEY_Z))
+			{
+				bJumping = true;
+				jumpAngle = 0;
+				startY = posPlayer.y;
+			}
+		}
 	}
+
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+}
+
 
 
 void Player::render()

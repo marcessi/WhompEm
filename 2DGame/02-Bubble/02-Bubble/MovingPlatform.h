@@ -20,7 +20,7 @@ public:
     void render() const;
     
     // Colisiones
-    bool collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const;
+    bool collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, float *posY) const;
     
     // Configuración
     void setPosition(const glm::vec2 &pos);
