@@ -12,11 +12,11 @@
 
 enum PlayerAnims
 {
-	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_LEFT, JUMP_RIGHT, PROTECT_LEFT, PROTECT_RIGHT, DIE, ATTACK_LEFT, ATTACK_RIGHT, DOWN_LEFT, DOWN_RIGHT, ATTACK_DOWN_LEFT, ATTACK_DOWN_RIGHT, ATTACK_RIGHT_MOVING, ATTACK_LEFT_MOVING
+	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_LEFT, JUMP_RIGHT, PROTECT_LEFT, PROTECT_RIGHT, DIE, ATTACK_LEFT, ATTACK_RIGHT, DOWN_LEFT, DOWN_RIGHT, ATTACK_DOWN_LEFT, ATTACK_DOWN_RIGHT, ATTACK_RIGHT_MOVING, ATTACK_LEFT_MOVING, ATTACK_JUMPING_RIGHT, ATTACK_JUMPING_LEFT, ATTACK_FALLING_RIGHT,ATTACK_FALLING_LEFT
 };
 
 enum LanzaActions {
-	THROW_LEFT, STANDS_LEFT, THROW_RIGHT, STANDS_RIGHT
+	THROW_LEFT, STANDS_LEFT, THROW_RIGHT, STANDS_RIGHT, UP, DOWN
 };
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
@@ -25,102 +25,121 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	spear_visible = false;
 	bJumping = false;
 	leftLimit = 0.f;
-	spritesheet.loadFromFile("images/soaring_eagle4.png", TEXTURE_PIXEL_FORMAT_RGBA);
-	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.2, 0.2), &spritesheet, &shaderProgram);
-	sprite->setNumberAnimations(17);
+	spritesheet.loadFromFile("images/soaring_eagle5.png", TEXTURE_PIXEL_FORMAT_RGBA);
+	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.125, 0.125), &spritesheet, &shaderProgram);
+	sprite->setNumberAnimations(21);
 	
 		sprite->setAnimationSpeed(STAND_LEFT, 8);
-		sprite->addKeyframe(STAND_LEFT, glm::vec2(0.8f, 0.6f));
+		sprite->addKeyframe(STAND_LEFT, glm::vec2(0.500f, 0.375f));
 		
 		sprite->setAnimationSpeed(STAND_RIGHT, 8);
-		sprite->addKeyframe(STAND_RIGHT, glm::vec2(0.f, 0.2f));
+		sprite->addKeyframe(STAND_RIGHT, glm::vec2(0.f, 0.125f));
 		
 		sprite->setAnimationSpeed(MOVE_LEFT, 8);
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.8f, 0.4f));
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.8f, 0.2f));
-		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.8f, 0.f));
+		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.500f, 0.250f));
+		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.500f, 0.125f));
+		sprite->addKeyframe(MOVE_LEFT, glm::vec2(0.500f, 0.f));
 		
 		sprite->setAnimationSpeed(MOVE_RIGHT, 8);
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.2, 0.2f));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.4, 0.2f));
-		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.6f, 0.2f));
+		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.125, 0.125f));
+		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.250, 0.125f));
+		sprite->addKeyframe(MOVE_RIGHT, glm::vec2(0.375f, 0.125f));
 
 		sprite->setAnimationSpeed(JUMP_LEFT, 8);
-		sprite->addKeyframe(JUMP_LEFT, glm::vec2(0.8f, 0.8f));
+		sprite->addKeyframe(JUMP_LEFT, glm::vec2(0.500f, 0.500f));
 
 		sprite->setAnimationSpeed(JUMP_RIGHT, 8);
-		sprite->addKeyframe(JUMP_RIGHT, glm::vec2(0.4f, 0.f));
+		sprite->addKeyframe(JUMP_RIGHT, glm::vec2(0.250f, 0.f));
 
 		sprite->setAnimationSpeed(PROTECT_LEFT, 8);
-		sprite->addKeyframe(PROTECT_LEFT, glm::vec2(0.6f, 0.8f));
+		sprite->addKeyframe(PROTECT_LEFT, glm::vec2(0.375f, 0.500f));
 
 		sprite->setAnimationSpeed(PROTECT_RIGHT, 8);
-		sprite->addKeyframe(PROTECT_RIGHT, glm::vec2(0.f, 0.6f));
+		sprite->addKeyframe(PROTECT_RIGHT, glm::vec2(0.f, 0.375f));
 
 		sprite->setAnimationSpeed(DIE, 8);
-		sprite->addKeyframe(DIE, glm::vec2(0.4f, 0.6f));
+		sprite->addKeyframe(DIE, glm::vec2(0.250f, 0.375f));
 
 		sprite->setAnimationSpeed(ATTACK_LEFT, 8);
-		sprite->addKeyframe(ATTACK_LEFT, glm::vec2(0.2f, 0.8f));
+		sprite->addKeyframe(ATTACK_LEFT, glm::vec2(0.125f, 0.500f));
 
 		sprite->setAnimationSpeed(ATTACK_RIGHT, 8);
-		sprite->addKeyframe(ATTACK_RIGHT, glm::vec2(0.f, 0.4f));
+		sprite->addKeyframe(ATTACK_RIGHT, glm::vec2(0.f, 0.250f));
 
 		sprite->setAnimationSpeed(DOWN_LEFT, 8);
-		sprite->addKeyframe(DOWN_LEFT, glm::vec2(0.8f, 0.8f));
+		sprite->addKeyframe(DOWN_LEFT, glm::vec2(0.500f, 0.500f));
 
 		sprite->setAnimationSpeed(DOWN_RIGHT, 8);
-		sprite->addKeyframe(DOWN_RIGHT, glm::vec2(0.4f, 0.f));
+		sprite->addKeyframe(DOWN_RIGHT, glm::vec2(0.250f, 0.f));
 
 		sprite->setAnimationSpeed(ATTACK_DOWN_LEFT, 8);
-		sprite->addKeyframe(ATTACK_DOWN_LEFT, glm::vec2(0.2f, 0.6f));
+		sprite->addKeyframe(ATTACK_DOWN_LEFT, glm::vec2(0.125f, 0.375f));
 
 		sprite->setAnimationSpeed(ATTACK_DOWN_RIGHT, 8);
-		sprite->addKeyframe(ATTACK_DOWN_RIGHT, glm::vec2(0.6f, 0.f));
+		sprite->addKeyframe(ATTACK_DOWN_RIGHT, glm::vec2(0.375f, 0.f));
 
 		sprite->setAnimationSpeed(ATTACK_RIGHT_MOVING, 8);
-		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.2f, 0.4f));
-		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.4f, 0.4f));
-		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.6f, 0.4f));
+		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.125f, 0.250f));
+		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.250f, 0.250f));
+		sprite->addKeyframe(ATTACK_RIGHT_MOVING, glm::vec2(0.375f, 0.250f));
 
 		sprite->setAnimationSpeed(ATTACK_LEFT_MOVING, 8);
-		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.f, 0.8f));
-		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.2f, 0.f));
+		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.f, 0.500f));
+		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.125f, 0.f));
 		sprite->addKeyframe(ATTACK_LEFT_MOVING, glm::vec2(0.0f, 0.f));
 
+		sprite->setAnimationSpeed(ATTACK_JUMPING_RIGHT, 8);
+		sprite->addKeyframe(ATTACK_JUMPING_RIGHT, glm::vec2(0.250,0.500));
 
-		spritesheet_lanza.loadFromFile("images/lanzas.png", TEXTURE_PIXEL_FORMAT_RGBA);
-		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.33, 0.25), &spritesheet_lanza, &shaderProgram);
-		sprite_lanza->setNumberAnimations(4);
+		sprite->setAnimationSpeed(ATTACK_JUMPING_LEFT, 8);
+		sprite->addKeyframe(ATTACK_JUMPING_LEFT, glm::vec2(0.375, 0.375));
+
+
+		sprite->setAnimationSpeed(ATTACK_FALLING_RIGHT, 8);
+		sprite->addKeyframe(ATTACK_FALLING_RIGHT, glm::vec2(0.625,0.500));
+		 
+		sprite->setAnimationSpeed(ATTACK_FALLING_LEFT, 8);
+		sprite->addKeyframe(ATTACK_FALLING_LEFT, glm::vec2(0.625,0.375));
+
+
+		spritesheet_lanza.loadFromFile("images/lanzas1.png", TEXTURE_PIXEL_FORMAT_RGBA);
+		sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.333, 0.25), &spritesheet_lanza, &shaderProgram);
+		sprite_lanza->setNumberAnimations(6);
 
 		sprite_lanza->setAnimationSpeed(THROW_LEFT, 30);
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.33f, 0.f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.25f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.5f));
 		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.f, 0.75f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.5f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.25f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.66f, 0.f));
-		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.33f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.f));
+		sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
 
 		sprite_lanza->setAnimationSpeed(STANDS_LEFT, 8);
-		sprite_lanza->addKeyframe(STANDS_LEFT, glm::vec2(0.33f, 0.f));
+		sprite_lanza->addKeyframe(STANDS_LEFT, glm::vec2(0.333f, 0.f));
 
 		sprite_lanza->setAnimationSpeed(THROW_RIGHT, 30);
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
-		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.25f));
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
-		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.5f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.5f));
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
-		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.33f, 0.25f));
+		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.25f));
 		sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
 
 		sprite_lanza->setAnimationSpeed(STANDS_RIGHT, 8);
 		sprite_lanza->addKeyframe(STANDS_RIGHT, glm::vec2(0.f, 0.f));
 		
+		sprite_lanza->setAnimationSpeed(UP, 8);
+		sprite_lanza->addKeyframe(UP, glm::vec2(0.333,0.75));
+
+		sprite_lanza->setAnimationSpeed(DOWN, 8);
+		sprite_lanza->addKeyframe(DOWN, glm::vec2(0.666,0.75));
+
 	sprite->changeAnimation(0);
 	tileMapDispl = tileMapPos;
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
@@ -131,7 +150,6 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 void Player::update(int deltaTime)
 {
-	
 	
 	
 
@@ -189,7 +207,7 @@ void Player::update(int deltaTime)
 					first_attack = true;
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 19)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18)));
 
 			}
 
@@ -266,7 +284,7 @@ void Player::update(int deltaTime)
 				first_attack = true;
 				sprite_lanza->changeAnimation(STANDS_RIGHT);
 			}
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 11)));
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
 		}
 		else {
 			if (sprite->animation() != MOVE_RIGHT)
@@ -308,7 +326,7 @@ void Player::update(int deltaTime)
 				sprite_lanza->changeAnimation(STANDS_RIGHT);
 			}
 
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 11)));
+			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
 		}
     }
     else
@@ -324,7 +342,8 @@ void Player::update(int deltaTime)
 
 		if (!Game::instance().getKey(GLFW_KEY_X))
 		{
-			spear_visible = false;
+
+			if(!Game::instance().getKey(GLFW_KEY_1) && !Game::instance().getKey(GLFW_KEY_2)) spear_visible = false;
 			first_attack = false;
 		}
 	}
@@ -350,6 +369,44 @@ void Player::update(int deltaTime)
             // Verificar si el jugador está subiendo o bajando
             bool movingDown = posPlayer.y > prevY;
 
+			if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+				spear_visible = true;
+				if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
+				if (dir == RIGHT) {
+					if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+
+				}
+				else {
+					if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+
+				}
+
+			}
+			else if (Game::instance().getKey(GLFW_KEY_UP)) {
+				spear_visible = true;
+
+				if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
+				if (dir == RIGHT) {
+					if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+
+				}
+				else {
+					if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+
+				}
+
+			}
+			else {
+				if (dir == LEFT)
+					sprite->changeAnimation(JUMP_LEFT);
+				else
+					sprite->changeAnimation(JUMP_RIGHT);
+			}
+
             // En la fase descendente, comprobar colisión abajo
             if (jumpAngle > 90) {
                 // Primero comprobar colisiones con paredes sólidas (mapWalls)
@@ -363,10 +420,7 @@ void Player::update(int deltaTime)
             }
         }
 
-        if (dir == LEFT)
-            sprite->changeAnimation(JUMP_LEFT);
-        else
-            sprite->changeAnimation(JUMP_RIGHT);
+        
     }
     else
     {
@@ -376,6 +430,7 @@ void Player::update(int deltaTime)
 
         // Verificar que el jugador está cayendo
         bool isFalling = posPlayer.y > prevY;
+		
 
         // Primero comprobar colisiones con paredes sólidas (mapWalls)
         bool collisionWithWalls = mapWalls->collisionMoveDown(posPlayer, glm::ivec2(32, 32), &posPlayer.y);
@@ -397,6 +452,39 @@ void Player::update(int deltaTime)
                 startY = posPlayer.y;
             }
         }
+		else {
+			if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+				spear_visible = true;
+				if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
+				if (dir == RIGHT) {
+					if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+				}
+				else {
+					if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+				}
+			}
+			else if (Game::instance().getKey(GLFW_KEY_UP)) {
+				spear_visible = true;
+				if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
+				if (dir == RIGHT) {
+					if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+				}
+				else {
+					if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+				}
+			}
+			else {
+				// Solo cambiamos a animación de salto si no hay tecla especial
+				if (dir == LEFT)
+					sprite->changeAnimation(JUMP_LEFT);
+				else
+					sprite->changeAnimation(JUMP_RIGHT);
+			}
+		}
     }
 
     sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
