@@ -8,14 +8,15 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
     mapWalls = NULL;
 	mapBackground = NULL;
 	mapPlatforms = NULL;
+	mapFrontal = NULL;
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
     currentCheckpoint = 0; // Inicializa el índice del punto de control actual
@@ -32,6 +33,8 @@ Scene::~Scene()
         delete mapBackground;
     if (mapPlatforms != NULL)
         delete mapPlatforms;
+    if (mapFrontal != NULL)
+        delete mapFrontal;
     if (player != NULL)
         delete player;
 
@@ -48,6 +51,7 @@ void Scene::init()
     mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+	mapFrontal = TileMap::createTileMap("levels/sacredwoods_frontal.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     player = new Player();
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
@@ -195,6 +199,7 @@ void Scene::render()
     texProgram.setUniformMatrix4f("modelview", modelview);
     texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
     mapBackground->render();
+	mapFrontal->render();
     mapWalls->render();
     mapPlatforms->render();
 

@@ -35,6 +35,7 @@ private:
 	TileMap* mapWalls;
 	TileMap* mapBackground;
 	TileMap* mapPlatforms;
+	TileMap* mapFrontal;
 	Player* player;
 	ShaderProgram texProgram;
 	float currentTime;
