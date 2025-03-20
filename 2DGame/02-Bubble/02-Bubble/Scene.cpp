@@ -8,21 +8,34 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
     mapWalls = NULL;
-	mapBackground = NULL;
-	mapPlatforms = NULL;
-	mapFrontal = NULL;
+    mapBackground = NULL;
+    mapPlatforms = NULL;
+    mapFrontal = NULL;
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
-    currentCheckpoint = 0; // Inicializa el índice del punto de control actual
-    isAnimating = false; // Inicializa la variable de animación
+    currentCheckpoint = 0;   // Inicializa el índice del punto de control actual
+    isAnimating = false;     // Inicializa la variable de animación
     bossCam = false;
     animationProgress = 0.0f; // Inicializa el progreso de la animación
+
+    // Inicializar variables del menú
+    gameState = MENU_MAIN;
+    currentOption = OPTION_START_GAME;
+    menuTime = 0.0f;
+    keyPressed = false;
+    keyPressedTimer = 0;
+
+    for (int i = 0; i < 3; i++) {
+        mainMenuSprites[i] = NULL;
+    }
+    instructionsSprite = NULL;
+    creditsSprite = NULL;
 }
 
 Scene::~Scene()
@@ -38,16 +51,35 @@ Scene::~Scene()
     if (player != NULL)
         delete player;
 
+    for (int i = 0; i < 3; i++) {
+        if (mainMenuSprites[i] != NULL) {
+            mainMenuSprites[i]->free();
+            delete mainMenuSprites[i];
+        }
+    }
+
+    if (instructionsSprite != NULL) {
+        instructionsSprite->free();
+        delete instructionsSprite;
+    }
+
+    if (creditsSprite != NULL) {
+        creditsSprite->free();
+        delete creditsSprite;
+    }
+
     // Liberar la memoria de las plataformas móviles
     for (auto platform : movingPlatforms) {
         delete platform;
     }
-    movingPlatforms.clear();
+    
+	movingPlatforms.clear();
 }
 
 void Scene::init()
 {
     initShaders();
+	initMenus();
     mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
@@ -103,8 +135,166 @@ void Scene::init()
     currentTime = 0.0f;
 }
 
+void Scene::initShaders()
+{
+    Shader vShader, fShader;
+
+    vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
+    if (!vShader.isCompiled())
+    {
+        cout << "Vertex Shader Error" << endl;
+        cout << "" << vShader.log() << endl << endl;
+    }
+    fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
+    if (!fShader.isCompiled())
+    {
+        cout << "Fragment Shader Error" << endl;
+        cout << "" << fShader.log() << endl << endl;
+    }
+    texProgram.init();
+    texProgram.addShader(vShader);
+    texProgram.addShader(fShader);
+    texProgram.link();
+    if (!texProgram.isLinked())
+    {
+        cout << "Shader Linking Error" << endl;
+        cout << "" << texProgram.log() << endl << endl;
+    }
+    texProgram.bindFragmentOutput("outColor");
+    vShader.free();
+    fShader.free();
+}
+
+void Scene::initMenus()
+{
+    // Crear los sprites para cada menú
+    glm::vec2 quadSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    glm::vec2 sizeInSpritesheet(1.0f, 1.0f);
+
+    // Texturas para cargar las imágenes (se crean dinámicamente)
+    Texture* texStart = new Texture();
+    Texture* texSelControls = new Texture();
+    Texture* texSelCredits = new Texture();
+    Texture* texControls = new Texture();
+    Texture* texCredits = new Texture();
+
+    // Cargar las texturas del menú principal
+    texStart->loadFromFile("images/start.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelControls->loadFromFile("images/selected_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelCredits->loadFromFile("images/selected_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Cargar las texturas de instrucciones y créditos
+    texControls->loadFromFile("images/controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texCredits->loadFromFile("images/credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Crear los sprites del menú principal con las texturas
+    mainMenuSprites[OPTION_START_GAME] = Sprite::createSprite(quadSize, sizeInSpritesheet, texStart, &texProgram);
+    mainMenuSprites[OPTION_START_GAME]->setPosition(glm::vec2(0.f, 0.f));
+
+    mainMenuSprites[OPTION_INSTRUCTIONS] = Sprite::createSprite(quadSize, sizeInSpritesheet, texSelControls, &texProgram);
+    mainMenuSprites[OPTION_INSTRUCTIONS]->setPosition(glm::vec2(0.f, 0.f));
+
+    mainMenuSprites[OPTION_CREDITS] = Sprite::createSprite(quadSize, sizeInSpritesheet, texSelCredits, &texProgram);
+    mainMenuSprites[OPTION_CREDITS]->setPosition(glm::vec2(0.f, 0.f));
+
+    // Crear los sprites para las pantallas de instrucciones y créditos
+    instructionsSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texControls, &texProgram);
+    instructionsSprite->setPosition(glm::vec2(0.f, 0.f));
+
+    creditsSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texCredits, &texProgram);
+    creditsSprite->setPosition(glm::vec2(0.f, 0.f));
+}
 
 void Scene::update(int deltaTime)
+{
+    // Actualizar según el estado actual del juego
+    switch (gameState)
+    {
+    case MENU_MAIN:
+    case MENU_INSTRUCTIONS:
+    case MENU_CREDITS:
+        updateMenu(deltaTime);
+        break;
+    case GAMEPLAY:
+        updateGameplay(deltaTime);
+        break;
+    }
+}
+
+
+void Scene::handleMenuInput()
+{
+    if (keyPressed)
+        return;
+
+    switch (gameState)
+    {
+    case MENU_MAIN:
+        // Navegación entre opciones
+        if (Game::instance().getKey(GLFW_KEY_DOWN))
+        {
+            currentOption = static_cast<MainMenuOption>((currentOption + 1) % 3); // 3 opciones en total
+            keyPressed = true;
+        }
+        else if (Game::instance().getKey(GLFW_KEY_UP))
+        {
+            currentOption = static_cast<MainMenuOption>((currentOption + 2) % 3); // +2 para dar la vuelta correctamente
+            keyPressed = true;
+        }
+
+        // Selección de opción
+        else if (Game::instance().getKey(GLFW_KEY_ENTER) || Game::instance().getKey(GLFW_KEY_SPACE))
+        {
+            keyPressed = true;
+            switch (currentOption)
+            {
+            case OPTION_START_GAME:
+                gameState = GAMEPLAY;
+                break;
+            case OPTION_INSTRUCTIONS:
+                gameState = MENU_INSTRUCTIONS;
+                break;
+            case OPTION_CREDITS:
+                gameState = MENU_CREDITS;
+                break;
+            }
+        }
+        break;
+
+    case MENU_INSTRUCTIONS:
+    case MENU_CREDITS:
+        // Volver al menú principal con cualquier tecla
+        if (Game::instance().getKey(GLFW_KEY_ENTER) ||
+            Game::instance().getKey(GLFW_KEY_ESCAPE) ||
+            Game::instance().getKey(GLFW_KEY_SPACE))
+        {
+            gameState = MENU_MAIN;
+            keyPressed = true;
+        }
+        break;
+    }
+}
+
+void Scene::updateMenu(int deltaTime)
+{
+    menuTime += deltaTime;
+
+    // Manejar la entrada de teclado para el menú
+    handleMenuInput();
+
+    // Manejar el tiempo de espera entre pulsaciones de teclas
+    if (keyPressed)
+    {
+        keyPressedTimer += deltaTime;
+        if (keyPressedTimer > 200) // 200ms de espera
+        {
+            keyPressed = false;
+            keyPressedTimer = 0;
+        }
+    }
+}
+
+void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
     player->update(deltaTime);
@@ -198,8 +388,48 @@ void Scene::render()
     modelview = glm::mat4(1.0f);
     texProgram.setUniformMatrix4f("modelview", modelview);
     texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
+    // Elegir qué renderizar según el estado actual
+    if (gameState == GAMEPLAY) {
+        renderGameplay();
+    }
+    else {
+        renderMenu();
+    }
+}
+
+void Scene::renderMenu()
+{
+
+	texProgram.use();
+
+    // Renderizar el sprite apropiado según el estado actual
+    switch (gameState)
+    {
+    case MENU_MAIN:
+        if (mainMenuSprites[currentOption] != nullptr) {
+            mainMenuSprites[currentOption]->render();
+        }
+        break;
+    case MENU_INSTRUCTIONS:
+        if (instructionsSprite != nullptr) {
+            instructionsSprite->render();
+        }
+        break;
+    case MENU_CREDITS:
+        if (creditsSprite != nullptr) {
+            creditsSprite->render();
+        }
+        break;
+    }
+}
+
+void Scene::renderGameplay()
+{
+
+    texProgram.use();
+
     mapBackground->render();
-	mapFrontal->render();
     mapWalls->render();
     mapPlatforms->render();
 
@@ -209,36 +439,13 @@ void Scene::render()
     }
 
     player->render();
-}
 
-void Scene::initShaders()
-{
-    Shader vShader, fShader;
+    //Reiniciar modelview y renderizar parte delantera
+    glm::mat4 modelview = glm::mat4(1.0f);
+    texProgram.setUniformMatrix4f("modelview", modelview);
+    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 
-    vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
-    if (!vShader.isCompiled())
-    {
-        cout << "Vertex Shader Error" << endl;
-        cout << "" << vShader.log() << endl << endl;
-    }
-    fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
-    if (!fShader.isCompiled())
-    {
-        cout << "Fragment Shader Error" << endl;
-        cout << "" << fShader.log() << endl << endl;
-    }
-    texProgram.init();
-    texProgram.addShader(vShader);
-    texProgram.addShader(fShader);
-    texProgram.link();
-    if (!texProgram.isLinked())
-    {
-        cout << "Shader Linking Error" << endl;
-        cout << "" << texProgram.log() << endl << endl;
-    }
-    texProgram.bindFragmentOutput("outColor");
-    vShader.free();
-    fShader.free();
+	mapFrontal->render();
 }
 
 int Scene::getCurrentCheckpoint()
