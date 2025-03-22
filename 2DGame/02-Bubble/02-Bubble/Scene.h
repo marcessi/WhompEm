@@ -1,4 +1,4 @@
-#ifndef _SCENE_INCLUDE
+ï»¿#ifndef _SCENE_INCLUDE
 #define _SCENE_INCLUDE
 
 #include <glm/glm.hpp>
@@ -6,7 +6,8 @@
 #include "ShaderProgram.h"
 #include "TileMap.h"
 #include "Player.h"
-#include "MovingPlatform.h" // Nueva inclusión
+#include "HUD.h"
+#include "MovingPlatform.h" // Nueva inclusiï¿½n
 
 #define CAMERA_WIDTH 640
 #define CAMERA_HEIGHT 480
@@ -27,6 +28,8 @@ public:
 
 	int getCurrentCheckpoint();
 	float getCameraLimit();
+	void setPlayerHealth(int health);
+	void setPlayerLights(int lights);
 
 private:
 	void initShaders();
@@ -36,14 +39,15 @@ private:
 	TileMap* mapBackground;
 	TileMap* mapPlatforms;
 	Player* player;
+	HUD* hud;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
 
-	// Plataformas móviles
+	// Plataformas mï¿½viles
 	std::vector<MovingPlatform*> movingPlatforms;
 
-	// Variables de cámara
+	// Variables de cï¿½mara
 	bool followHorizontal;
 	int currentCheckpoint;
 	bool isAnimating;

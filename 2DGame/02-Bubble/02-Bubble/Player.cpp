@@ -12,7 +12,7 @@
 
 enum PlayerAnims
 {
-	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_LEFT, JUMP_RIGHT, PROTECT_LEFT, PROTECT_RIGHT, DIE, ATTACK_LEFT, ATTACK_RIGHT, DOWN_LEFT, DOWN_RIGHT, ATTACK_DOWN_LEFT, ATTACK_DOWN_RIGHT, ATTACK_RIGHT_MOVING, ATTACK_LEFT_MOVING, ATTACK_JUMPING_RIGHT, ATTACK_JUMPING_LEFT, ATTACK_FALLING_RIGHT,ATTACK_FALLING_LEFT
+	STAND_LEFT, STAND_RIGHT, MOVE_LEFT, MOVE_RIGHT, JUMP_LEFT, JUMP_RIGHT, PROTECT_LEFT, PROTECT_RIGHT, DIE_LEFT, DIE_RIGHT, ATTACK_LEFT, ATTACK_RIGHT, DOWN_LEFT, DOWN_RIGHT, ATTACK_DOWN_LEFT, ATTACK_DOWN_RIGHT, ATTACK_RIGHT_MOVING, ATTACK_LEFT_MOVING, ATTACK_JUMPING_RIGHT, ATTACK_JUMPING_LEFT, ATTACK_FALLING_RIGHT,ATTACK_FALLING_LEFT
 };
 
 enum LanzaActions {
@@ -21,6 +21,8 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	hearts = glm::vec4(4, 4, 4, 4);
+	ligths = 2;
 	first_attack = false;
 	spear_visible = false;
 	movingPlatforms = nullptr;
@@ -28,7 +30,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	leftLimit = 0.f;
 	spritesheet.loadFromFile("images/soaring_eagle5.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	sprite = Sprite::createSprite(glm::ivec2(32, 32), glm::vec2(0.125, 0.125), &spritesheet, &shaderProgram);
-	sprite->setNumberAnimations(21);
+	sprite->setNumberAnimations(22);
 	
 		sprite->setAnimationSpeed(STAND_LEFT, 8);
 		sprite->addKeyframe(STAND_LEFT, glm::vec2(0.500f, 0.375f));
@@ -58,8 +60,12 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 		sprite->setAnimationSpeed(PROTECT_RIGHT, 8);
 		sprite->addKeyframe(PROTECT_RIGHT, glm::vec2(0.f, 0.375f));
 
-		sprite->setAnimationSpeed(DIE, 8);
-		sprite->addKeyframe(DIE, glm::vec2(0.250f, 0.375f));
+		sprite->setAnimationSpeed(DIE_RIGHT, 8);
+		sprite->addKeyframe(DIE_RIGHT, glm::vec2(0.250f, 0.375f));
+		
+
+		sprite->setAnimationSpeed(DIE_LEFT, 8);
+		sprite->addKeyframe(DIE_LEFT, glm::vec2(0.625f, 0.250f));
 
 		sprite->setAnimationSpeed(ATTACK_LEFT, 8);
 		sprite->addKeyframe(ATTACK_LEFT, glm::vec2(0.125f, 0.500f));
@@ -509,12 +515,21 @@ void Player::update(int deltaTime)
 			}
 			else {
 				if (dir == LEFT)
-					sprite->changeAnimation(JUMP_LEFT);
+					if (sprite->animation() != JUMP_LEFT) sprite->changeAnimation(JUMP_LEFT);
 				else
-					sprite->changeAnimation(JUMP_RIGHT);
+						if (sprite->animation() != JUMP_RIGHT) sprite->changeAnimation(JUMP_RIGHT);
 			}
 		}
     }
+	if (hitted) {
+		if (dir == LEFT) {
+			if (sprite->animation() != DIE_LEFT) sprite->changeAnimation(DIE_LEFT);
+		}
+		else {
+			if (sprite->animation() != DIE_RIGHT) sprite->changeAnimation(DIE_RIGHT);
+		}
+	}
+
 
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 }
@@ -554,3 +569,33 @@ void Player::setMovingPlatforms(const std::vector<MovingPlatform*>* platforms)
 	movingPlatforms = platforms;
 }
 
+pair<glm::ivec4, int> Player::getplayerLifes() {
+	 pair< glm::ivec4, int> aux;
+	 aux.first = hearts;
+	 aux.second = ligths;
+	 return aux;
+
+}
+
+void Player::isHitted() {
+	hitted = true;
+	if (hearts.x > 0) {
+		hearts.x--;
+	}
+	else if (hearts.y > 0) {
+		hearts.y--;
+	}
+	else if (hearts.z > 0) {
+		hearts.z--;
+	}
+	else if (hearts.w > 0) {
+		hearts.w--;
+	}
+	else {
+		ligths--;
+		if (ligths == 0) {
+			gameover = true;
+		}
+		
+	}
+}

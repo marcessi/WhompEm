@@ -29,6 +29,8 @@ public:
     glm::ivec2 getPosition();
     void setLeftLimit(float leftLimit);
     bool isJumping() const { return bJumping; }
+    void isHitted();
+    pair<glm::ivec4, int> getplayerLifes();
 
 
 private:
@@ -45,6 +47,10 @@ private:
     bool spear_visible;
     float leftLimit;
     bool first_attack;
+    bool hitted;
+    int ligths;
+    bool gameover;
+    glm::ivec4 hearts;
 
 };
 

@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Scene.h"
@@ -14,14 +14,15 @@
 Scene::Scene()
 {
     mapWalls = NULL;
-	mapBackground = NULL;
-	mapPlatforms = NULL;
+    mapBackground = NULL;
+    mapPlatforms = NULL;
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
-    currentCheckpoint = 0; // Inicializa el índice del punto de control actual
-    isAnimating = false; // Inicializa la variable de animación
+    currentCheckpoint = 0; // Inicializa el ï¿½ndice del punto de control actual
+    isAnimating = false; // Inicializa la variable de animaciï¿½n
     bossCam = false;
-    animationProgress = 0.0f; // Inicializa el progreso de la animación
+    hud = NULL;
+    animationProgress = 0.0f; // Inicializa el progreso de la animaciï¿½n
 }
 
 Scene::~Scene()
@@ -34,8 +35,10 @@ Scene::~Scene()
         delete mapPlatforms;
     if (player != NULL)
         delete player;
+    if (hud != NULL)
+        delete hud;
 
-    // Liberar la memoria de las plataformas móviles
+    // Liberar la memoria de las plataformas mï¿½viles
     for (auto platform : movingPlatforms) {
         delete platform;
     }
@@ -53,7 +56,12 @@ void Scene::init()
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
     player->setTileMap(mapWalls, mapPlatforms);
 
-    // Inicializar las plataformas móviles
+    hud = new HUD();
+    hud->init(glm::ivec2(2, 2), texProgram);
+    hud->setHealth(4);
+
+
+    // Inicializar las plataformas mï¿½viles
     // Plataforma 1
     MovingPlatform* platform1 = new MovingPlatform();
     platform1->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
@@ -78,21 +86,21 @@ void Scene::init()
     platform3->setSpeed(5.f);
     movingPlatforms.push_back(platform3);
 
-	// Plataforma 4
-	MovingPlatform* platform4 = new MovingPlatform();
-	platform4->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
-	platform4->setPosition(glm::vec2(3232, 816));
-	platform4->setMovementLimits(720, 816);
-	platform4->setSpeed(5.f);
-	movingPlatforms.push_back(platform4);
+    // Plataforma 4
+    MovingPlatform* platform4 = new MovingPlatform();
+    platform4->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+    platform4->setPosition(glm::vec2(3232, 816));
+    platform4->setMovementLimits(720, 816);
+    platform4->setSpeed(5.f);
+    movingPlatforms.push_back(platform4);
 
-	// Plataforma 5
-	MovingPlatform* platform5 = new MovingPlatform();
-	platform5->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
-	platform5->setPosition(glm::vec2(3143, 576));
-	platform5->setMovementLimits(576, 672);
-	platform5->setSpeed(5.5f);
-	movingPlatforms.push_back(platform5);
+    // Plataforma 5
+    MovingPlatform* platform5 = new MovingPlatform();
+    platform5->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, "images/platform.png", glm::ivec2(25, 16));
+    platform5->setPosition(glm::vec2(3143, 576));
+    platform5->setMovementLimits(576, 672);
+    platform5->setSpeed(5.5f);
+    movingPlatforms.push_back(platform5);
 
     player->setMovingPlatforms(&movingPlatforms);
     projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
@@ -106,28 +114,31 @@ void Scene::update(int deltaTime)
     player->update(deltaTime);
     glm::ivec2 posPlayer = player->getPosition();
 
-    // Actualizar las plataformas móviles
+    // Actualizar las plataformas mï¿½viles
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
     }
 
+
+
+
     // Verificar si el jugador ha alcanzado el punto de control actual
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
     {
-        // Iniciar la animación de desplazamiento a la derecha
+        // Iniciar la animaciï¿½n de desplazamiento a la derecha
         isAnimating = true;
         animationProgress = 0.0f;
-        initialCamX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f; // Guardar la posición inicial de la cámara
+        initialCamX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f; // Guardar la posiciï¿½n inicial de la cï¿½mara
         player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
-        followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+        followHorizontal = !followHorizontal; // Invertir la direcciï¿½n de seguimiento
         if (currentCheckpoint == 5) bossCam = true;
     }
 
-    // Ejecutar la animación de desplazamiento a la derecha
+    // Ejecutar la animaciï¿½n de desplazamiento a la derecha
     if (isAnimating)
     {
-        animationProgress += deltaTime * 0.002f; // Ajusta la velocidad de la animación
+        animationProgress += deltaTime * 0.002f; // Ajusta la velocidad de la animaciï¿½n
         if (animationProgress >= 1.0f)
         {
             animationProgress = 1.0f;
@@ -135,15 +146,15 @@ void Scene::update(int deltaTime)
         }
     }
 
-    // Calcular las coordenadas de la cámara
+    // Calcular las coordenadas de la cï¿½mara
     float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
     float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
 
     if (!bossCam) {
-        // Ajustar la lógica de la cámara según la variable followHorizontal
+        // Ajustar la lï¿½gica de la cï¿½mara segï¿½n la variable followHorizontal
         if (followHorizontal)
         {
-            if (currentCheckpoint == 0) camY = 16.f; // Mantener la posición de la cámara en el eje y constante
+            if (currentCheckpoint == 0) camY = 16.f; // Mantener la posiciï¿½n de la cï¿½mara en el eje y constante
             else if (currentCheckpoint == 2) camY = 1456.f;
             else if (currentCheckpoint == 4) camY = 496.f;
             if (camX < cameraLimits[currentCheckpoint].first)
@@ -171,17 +182,23 @@ void Scene::update(int deltaTime)
     }
     else {
         camX = checkpoints[currentCheckpoint - 1] + 32.f;
-		camY = 496.f;
+        camY = 496.f;
     }
 
-    // Ajustar la posición de la cámara durante la animación
+    // Ajustar la posiciï¿½n de la cï¿½mara durante la animaciï¿½n
     if (isAnimating)
     {
         camX = glm::mix(initialCamX, checkpoints[currentCheckpoint - 1] + 32.f, animationProgress);
     }
 
-    // Ajustar la matriz de proyección para centrar la cámara en posPlayer
+    // Ajustar la matriz de proyecciï¿½n para centrar la cï¿½mara en posPlayer
     projection = glm::ortho(camX, camX + CAMERA_WIDTH, camY + CAMERA_HEIGHT, camY);
+
+    if (hud != nullptr) {
+        hud->updatePosition(camX, camY);
+    }
+
+    hud->update(deltaTime);
 }
 
 void Scene::render()
@@ -198,12 +215,14 @@ void Scene::render()
     mapWalls->render();
     mapPlatforms->render();
 
-    // Renderizar las plataformas móviles
+    // Renderizar las plataformas mï¿½viles
     for (auto platform : movingPlatforms) {
         platform->render();
     }
 
     player->render();
+
+    hud->render();
 }
 
 void Scene::initShaders()
@@ -238,10 +257,23 @@ void Scene::initShaders()
 
 int Scene::getCurrentCheckpoint()
 {
-	return currentCheckpoint;
+    return currentCheckpoint;
 }
 
 float Scene::getCameraLimit()
 {
-	return cameraLimits[currentCheckpoint].first;
+    return cameraLimits[currentCheckpoint].first;
 }
+
+void Scene::setPlayerHealth(int health)
+{
+    if (hud != nullptr)
+        hud->setHealth(health);
+}
+
+void Scene::setPlayerLights(int lights)
+{
+    if (hud != nullptr)
+        hud->setLights(lights);
+}
+
