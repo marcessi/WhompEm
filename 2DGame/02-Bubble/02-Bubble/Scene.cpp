@@ -179,9 +179,9 @@ void Scene::initMenus()
     Texture* texCredits = new Texture();
 
     // Cargar las texturas del menú principal
-    texStart->loadFromFile("images/start.png", TEXTURE_PIXEL_FORMAT_RGBA);
-    texSelControls->loadFromFile("images/selected_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
-    texSelCredits->loadFromFile("images/selected_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texStart->loadFromFile("images/main_start.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelControls->loadFromFile("images/main_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelCredits->loadFromFile("images/main_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
 
     // Cargar las texturas de instrucciones y créditos
     texControls->loadFromFile("images/controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
