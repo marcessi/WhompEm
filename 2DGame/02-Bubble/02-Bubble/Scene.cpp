@@ -8,14 +8,15 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
     mapWalls = NULL;
     mapBackground = NULL;
     mapPlatforms = NULL;
+
     player = NULL;
     followHorizontal = true; // Inicializa la variable para seguir horizontalmente
     currentCheckpoint = 0; // Inicializa el �ndice del punto de control actual
@@ -23,6 +24,28 @@ Scene::Scene()
     bossCam = false;
     hud = NULL;
     animationProgress = 0.0f; // Inicializa el progreso de la animaci�n
+    snakeSpawnTimer = 0.0f;
+
+    mapFrontal = NULL;
+    player = NULL;
+    followHorizontal = true; // Inicializa la variable para seguir horizontalmente
+    currentCheckpoint = 0;   // Inicializa el �ndice del punto de control actual
+    isAnimating = false;     // Inicializa la variable de animaci�n
+    bossCam = false;
+    animationProgress = 0.0f; // Inicializa el progreso de la animaci�n
+
+    // Inicializar variables del men�
+    gameState = MENU_MAIN;
+    currentOption = OPTION_START_GAME;
+    menuTime = 0.0f;
+    keyPressed = false;
+    keyPressedTimer = 0;
+
+    for (int i = 0; i < 3; i++) {
+        mainMenuSprites[i] = NULL;
+    }
+    instructionsSprite = NULL;
+    creditsSprite = NULL;
 }
 
 Scene::~Scene()
@@ -33,24 +56,52 @@ Scene::~Scene()
         delete mapBackground;
     if (mapPlatforms != NULL)
         delete mapPlatforms;
+    if (mapFrontal != NULL)
+        delete mapFrontal;
     if (player != NULL)
         delete player;
     if (hud != NULL)
         delete hud;
 
     // Liberar la memoria de las plataformas m�viles
+    for (int i = 0; i < 3; i++) {
+        if (mainMenuSprites[i] != NULL) {
+            mainMenuSprites[i]->free();
+            delete mainMenuSprites[i];
+        }
+    }
+
+    if (instructionsSprite != NULL) {
+        instructionsSprite->free();
+        delete instructionsSprite;
+    }
+
+    if (creditsSprite != NULL) {
+        creditsSprite->free();
+        delete creditsSprite;
+    }
+
+    // Liberar la memoria de las plataformas m�viles
     for (auto platform : movingPlatforms) {
         delete platform;
     }
-    movingPlatforms.clear();
+
+    for (auto snake : snakes) {
+        delete snake;
+    }
+    snakes.clear();
+    
+	movingPlatforms.clear();
 }
 
 void Scene::init()
 {
     initShaders();
+	initMenus();
     mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+	mapFrontal = TileMap::createTileMap("levels/sacredwoods_frontal.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     player = new Player();
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
@@ -107,18 +158,176 @@ void Scene::init()
     currentTime = 0.0f;
 }
 
+void Scene::initShaders()
+{
+    Shader vShader, fShader;
+
+    vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
+    if (!vShader.isCompiled())
+    {
+        cout << "Vertex Shader Error" << endl;
+        cout << "" << vShader.log() << endl << endl;
+    }
+    fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
+    if (!fShader.isCompiled())
+    {
+        cout << "Fragment Shader Error" << endl;
+        cout << "" << fShader.log() << endl << endl;
+    }
+    texProgram.init();
+    texProgram.addShader(vShader);
+    texProgram.addShader(fShader);
+    texProgram.link();
+    if (!texProgram.isLinked())
+    {
+        cout << "Shader Linking Error" << endl;
+        cout << "" << texProgram.log() << endl << endl;
+    }
+    texProgram.bindFragmentOutput("outColor");
+    vShader.free();
+    fShader.free();
+}
+
+void Scene::initMenus()
+{
+    // Crear los sprites para cada men�
+    glm::vec2 quadSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    glm::vec2 sizeInSpritesheet(1.0f, 1.0f);
+
+    // Texturas para cargar las im�genes (se crean din�micamente)
+    Texture* texStart = new Texture();
+    Texture* texSelControls = new Texture();
+    Texture* texSelCredits = new Texture();
+    Texture* texControls = new Texture();
+    Texture* texCredits = new Texture();
+
+    // Cargar las texturas del men� principal
+    texStart->loadFromFile("images/start.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelControls->loadFromFile("images/selected_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelCredits->loadFromFile("images/selected_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Cargar las texturas de instrucciones y cr�ditos
+    texControls->loadFromFile("images/controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texCredits->loadFromFile("images/credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Crear los sprites del men� principal con las texturas
+    mainMenuSprites[OPTION_START_GAME] = Sprite::createSprite(quadSize, sizeInSpritesheet, texStart, &texProgram);
+    mainMenuSprites[OPTION_START_GAME]->setPosition(glm::vec2(0.f, 0.f));
+
+    mainMenuSprites[OPTION_INSTRUCTIONS] = Sprite::createSprite(quadSize, sizeInSpritesheet, texSelControls, &texProgram);
+    mainMenuSprites[OPTION_INSTRUCTIONS]->setPosition(glm::vec2(0.f, 0.f));
+
+    mainMenuSprites[OPTION_CREDITS] = Sprite::createSprite(quadSize, sizeInSpritesheet, texSelCredits, &texProgram);
+    mainMenuSprites[OPTION_CREDITS]->setPosition(glm::vec2(0.f, 0.f));
+
+    // Crear los sprites para las pantallas de instrucciones y cr�ditos
+    instructionsSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texControls, &texProgram);
+    instructionsSprite->setPosition(glm::vec2(0.f, 0.f));
+
+    creditsSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texCredits, &texProgram);
+    creditsSprite->setPosition(glm::vec2(0.f, 0.f));
+}
 
 void Scene::update(int deltaTime)
+{
+    // Actualizar seg�n el estado actual del juego
+    switch (gameState)
+    {
+    case MENU_MAIN:
+    case MENU_INSTRUCTIONS:
+    case MENU_CREDITS:
+        updateMenu(deltaTime);
+        break;
+    case GAMEPLAY:
+        updateGameplay(deltaTime);
+        break;
+    }
+}
+
+
+void Scene::handleMenuInput()
+{
+    if (keyPressed)
+        return;
+
+    switch (gameState)
+    {
+    case MENU_MAIN:
+        // Navegaci�n entre opciones
+        if (Game::instance().getKey(GLFW_KEY_DOWN))
+        {
+            currentOption = static_cast<MainMenuOption>((currentOption + 1) % 3); // 3 opciones en total
+            keyPressed = true;
+        }
+        else if (Game::instance().getKey(GLFW_KEY_UP))
+        {
+            currentOption = static_cast<MainMenuOption>((currentOption + 2) % 3); // +2 para dar la vuelta correctamente
+            keyPressed = true;
+        }
+
+        // Selecci�n de opci�n
+        else if (Game::instance().getKey(GLFW_KEY_ENTER) || Game::instance().getKey(GLFW_KEY_SPACE))
+        {
+            keyPressed = true;
+            switch (currentOption)
+            {
+            case OPTION_START_GAME:
+                gameState = GAMEPLAY;
+                break;
+            case OPTION_INSTRUCTIONS:
+                gameState = MENU_INSTRUCTIONS;
+                break;
+            case OPTION_CREDITS:
+                gameState = MENU_CREDITS;
+                break;
+            }
+        }
+        break;
+
+    case MENU_INSTRUCTIONS:
+    case MENU_CREDITS:
+        // Volver al men� principal con cualquier tecla
+        if (Game::instance().getKey(GLFW_KEY_ENTER) ||
+            Game::instance().getKey(GLFW_KEY_ESCAPE) ||
+            Game::instance().getKey(GLFW_KEY_SPACE))
+        {
+            gameState = MENU_MAIN;
+            keyPressed = true;
+        }
+        break;
+    }
+}
+
+void Scene::updateMenu(int deltaTime)
+{
+    menuTime += deltaTime;
+
+    // Manejar la entrada de teclado para el men�
+    handleMenuInput();
+
+    // Manejar el tiempo de espera entre pulsaciones de teclas
+    if (keyPressed)
+    {
+        keyPressedTimer += deltaTime;
+        if (keyPressedTimer > 200) // 200ms de espera
+        {
+            keyPressed = false;
+            keyPressedTimer = 0;
+        }
+    }
+}
+
+void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
     player->update(deltaTime);
     glm::ivec2 posPlayer = player->getPosition();
-
     // Actualizar las plataformas m�viles
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
     }
 
+    updateSnakes(deltaTime);
 
 
 
@@ -197,9 +406,88 @@ void Scene::update(int deltaTime)
     if (hud != nullptr) {
         hud->updatePosition(camX, camY);
     }
+    
 
     hud->update(deltaTime);
 }
+
+void Scene::updateSnakes(int deltaTime)
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+
+    // Verificar si el jugador está en el rango para generar serpientes
+    bool inSnakeZone = (posPlayer.x >= SNAKE_MIN_X && posPlayer.x <= SNAKE_MAX_X);
+
+    // Generar nuevas serpientes solo si el jugador está en la zona
+    if (inSnakeZone && snakes.size() < 3) {
+        snakeSpawnTimer += deltaTime;
+
+        if (snakeSpawnTimer >= SNAKE_SPAWN_INTERVAL) {
+            snakeSpawnTimer = 0.0f;
+
+            // Determinar dirección basada en la posición del jugador
+            Snake::Direction snakeDir = Snake::LEFT;
+            if (posPlayer.x > (SNAKE_MIN_X + SNAKE_MAX_X) / 2) {
+                snakeDir = Snake::RIGHT;
+            }
+
+            // Calcular posición de generación (fuera de pantalla pero cerca)
+            float spawnX;
+            if (snakeDir == Snake::LEFT) {
+                spawnX = camX + CAMERA_WIDTH + 32; // A la derecha de la pantalla
+            }
+            else {
+                spawnX = camX - 32; // A la izquierda de la pantalla
+            }
+
+            // Ajustar la altura para que esté cerca de la altura del jugador
+            // pero no exactamente igual para agregar variedad
+            float spawnY = posPlayer.y;
+
+            // Asegurarse de que no esté demasiado baja
+            // Si el jugador está saltando, usar una altura base razonable
+            if (spawnY > camY + CAMERA_HEIGHT - 80) {
+                spawnY = camY + CAMERA_HEIGHT - 80;
+            }
+
+            // Crear la serpiente
+            Snake* newSnake = new Snake();
+            newSnake->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, snakeDir);
+            newSnake->setPosition(glm::vec2(spawnX, spawnY));
+            newSnake->setMovementLimits(camX - 20, camX + CAMERA_WIDTH - 10);
+            newSnake->setTileMap(mapWalls, mapPlatforms);
+            snakes.push_back(newSnake);
+        }
+    }
+    else {
+        // Si el jugador no está en la zona, reiniciar el temporizador
+        snakeSpawnTimer = 0.0f;
+    }
+
+    // Actualizar todas las serpientes existentes
+    for (size_t i = 0; i < snakes.size(); ++i) {
+        Snake* snake = snakes[i];
+        snake->update(deltaTime);
+
+        // Comprobar colisiones con el jugador
+        if (snake->collisionWithPlayer(posPlayer, glm::ivec2(16, 32))) {
+            player->isHitted(); // El jugador recibe daño
+        }
+
+        // Eliminar serpientes que ya no son visibles en la cámara
+        glm::ivec2 snakePos = snake->getPosition();
+        if (snakePos.x < camX - 64 || snakePos.x > camX + CAMERA_WIDTH + 64 ||
+            snakePos.y < camY - 64 || snakePos.y > camY + CAMERA_HEIGHT + 64) {
+            delete snake;
+            snakes.erase(snakes.begin() + i);
+            --i; // Ajustar el índice después de eliminar
+        }
+    }
+}
+
+
 
 void Scene::render()
 {
@@ -211,6 +499,47 @@ void Scene::render()
     modelview = glm::mat4(1.0f);
     texProgram.setUniformMatrix4f("modelview", modelview);
     texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
+    // Elegir qu� renderizar seg�n el estado actual
+    if (gameState == GAMEPLAY) {
+        renderGameplay();
+    }
+    else {
+        renderMenu();
+    }
+}
+
+void Scene::renderMenu()
+{
+
+	texProgram.use();
+
+    // Renderizar el sprite apropiado seg�n el estado actual
+    switch (gameState)
+    {
+    case MENU_MAIN:
+        if (mainMenuSprites[currentOption] != nullptr) {
+            mainMenuSprites[currentOption]->render();
+        }
+        break;
+    case MENU_INSTRUCTIONS:
+        if (instructionsSprite != nullptr) {
+            instructionsSprite->render();
+        }
+        break;
+    case MENU_CREDITS:
+        if (creditsSprite != nullptr) {
+            creditsSprite->render();
+        }
+        break;
+    }
+}
+
+void Scene::renderGameplay()
+{
+
+    texProgram.use();
+
     mapBackground->render();
     mapWalls->render();
     mapPlatforms->render();
@@ -220,39 +549,23 @@ void Scene::render()
         platform->render();
     }
 
+    for (auto snake : snakes) {
+        snake->render();
+    }
+    
     player->render();
 
+
+
+    //Reiniciar modelview y renderizar parte delantera
+    glm::mat4 modelview = glm::mat4(1.0f);
+    texProgram.setUniformMatrix4f("modelview", modelview);
+    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
+
+    mapFrontal->render();
     hud->render();
-}
 
-void Scene::initShaders()
-{
-    Shader vShader, fShader;
 
-    vShader.initFromFile(VERTEX_SHADER, "shaders/texture.vert");
-    if (!vShader.isCompiled())
-    {
-        cout << "Vertex Shader Error" << endl;
-        cout << "" << vShader.log() << endl << endl;
-    }
-    fShader.initFromFile(FRAGMENT_SHADER, "shaders/texture.frag");
-    if (!fShader.isCompiled())
-    {
-        cout << "Fragment Shader Error" << endl;
-        cout << "" << fShader.log() << endl << endl;
-    }
-    texProgram.init();
-    texProgram.addShader(vShader);
-    texProgram.addShader(fShader);
-    texProgram.link();
-    if (!texProgram.isLinked())
-    {
-        cout << "Shader Linking Error" << endl;
-        cout << "" << texProgram.log() << endl << endl;
-    }
-    texProgram.bindFragmentOutput("outColor");
-    vShader.free();
-    fShader.free();
 }
 
 int Scene::getCurrentCheckpoint()
