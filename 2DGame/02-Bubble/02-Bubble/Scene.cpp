@@ -364,7 +364,7 @@ void Scene::updateGameplay(int deltaTime)
         initialCamX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f; // Guardar la posici�n inicial de la c�mara
         player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
-        followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
+        followHorizontal = !followHorizontal; // Invertir la direcci�n de seguimiento
         if (currentCheckpoint == 5) {
             bossCam = true;
 			audioManager.playMusic("sounds/boss_music.mp3", true, 0.5f);

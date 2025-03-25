@@ -6,15 +6,11 @@
 #include "ShaderProgram.h"
 #include "TileMap.h"
 #include "Player.h"
-<<<<<<< HEAD
 #include "MovingPlatform.h"
 #include "AudioManager.h"
-=======
 #include "Snake.h"
 #include "HUD.h"
 #include "MovingPlatform.h" // Nueva inclusi�n
-
->>>>>>> 191d59c5543768899a0cfa452b6d1f13ec4d71c4
 
 
 #define SCREEN_WIDTH 1024
