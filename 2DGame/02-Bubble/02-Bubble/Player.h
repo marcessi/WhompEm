@@ -25,10 +25,13 @@ public:
     void setTileMap(TileMap* tileMapWalls, TileMap* tileMapPlatforms);
     void setMovingPlatforms(const std::vector<MovingPlatform*>* platforms); // Nuevo método
     void setPosition(const glm::vec2& pos);
+    bool checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize);
 
     glm::ivec2 getPosition();
     void setLeftLimit(float leftLimit);
     bool isJumping() const { return bJumping; }
+    void isHitted();
+    pair<glm::ivec4, int> getplayerLifes();
 
 
 private:
@@ -45,6 +48,21 @@ private:
     bool spear_visible;
     float leftLimit;
     bool first_attack;
+    bool hitted;
+    int ligths;
+    bool gameover;
+    glm::ivec4 hearts;
+	bool invulnerable;
+	int hitTimer;
+	int invulnerableTimer;
+	bool player_visible;
+
+    // Variables para el salto al recibir daño
+    bool knockbackJumping;
+    int knockbackAngle;
+    int knockbackStartY;
+    int knockbackDir; // 1 o -1 según dirección
+
 
 };
 

@@ -45,7 +45,14 @@
     <ClInclude Include="MovingPlatform.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="AudioManager.h">
+=======
+    <ClInclude Include="HUD.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Snake.h">
+>>>>>>> 191d59c5543768899a0cfa452b6d1f13ec4d71c4
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,7 +87,14 @@
     <ClCompile Include="MovingPlatform.cpp">
       <Filter>Archivos de código fuente</Filter>
     </ClCompile>
+<<<<<<< HEAD
     <ClCompile Include="AudioManager.cpp">
+=======
+    <ClCompile Include="HUD.cpp">
+      <Filter>Archivos de código fuente</Filter>
+    </ClCompile>
+    <ClCompile Include="snake.cpp">
+>>>>>>> 191d59c5543768899a0cfa452b6d1f13ec4d71c4
       <Filter>Archivos de código fuente</Filter>
     </ClCompile>
   </ItemGroup>

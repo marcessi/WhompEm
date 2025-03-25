@@ -1,4 +1,4 @@
-#ifndef _SCENE_INCLUDE
+ï»¿#ifndef _SCENE_INCLUDE
 #define _SCENE_INCLUDE
 
 #include <glm/glm.hpp>
@@ -6,8 +6,15 @@
 #include "ShaderProgram.h"
 #include "TileMap.h"
 #include "Player.h"
+<<<<<<< HEAD
 #include "MovingPlatform.h"
 #include "AudioManager.h"
+=======
+#include "Snake.h"
+#include "HUD.h"
+#include "MovingPlatform.h" // Nueva inclusiï¿½n
+
+>>>>>>> 191d59c5543768899a0cfa452b6d1f13ec4d71c4
 
 
 #define SCREEN_WIDTH 1024
@@ -15,7 +22,7 @@
 #define CAMERA_WIDTH 256
 #define CAMERA_HEIGHT 240
 
-// Enumeración para los estados del juego
+// Enumeraciï¿½n para los estados del juego
 enum GameState {
 	MENU_MAIN,
 	MENU_INSTRUCTIONS,
@@ -23,7 +30,7 @@ enum GameState {
 	GAMEPLAY
 };
 
-// Enumeración para las opciones del menú principal
+// Enumeraciï¿½n para las opciones del menï¿½ principal
 enum MainMenuOption {
 	OPTION_START_GAME,
 	OPTION_INSTRUCTIONS,
@@ -45,6 +52,8 @@ public:
 
 	int getCurrentCheckpoint();
 	float getCameraLimit();
+	void setPlayerHealth(const glm::ivec4& health);
+	void setPlayerLights(int lights);
 
 private:
 	void initShaders();
@@ -55,6 +64,7 @@ private:
 	void renderMenu();
 	void renderGameplay();
 	void handleMenuInput();
+	void updateSnakes(int deltaTime);
 
 private:
 
@@ -63,10 +73,10 @@ private:
 	// Estado actual del juego
 	GameState gameState;
 
-	// Variables del menú con Sprite
+	// Variables del menï¿½ con Sprite
 	MainMenuOption currentOption;
 
-	Sprite* mainMenuSprites[3]; // Un sprite para cada opción del menú principal
+	Sprite* mainMenuSprites[3]; // Un sprite para cada opciï¿½n del menï¿½ principal
 	Sprite* instructionsSprite; // Sprite para la pantalla de instrucciones
 	Sprite* creditsSprite;      // Sprite para la pantalla de cr
 
@@ -80,14 +90,21 @@ private:
 	TileMap* mapPlatforms;
 	TileMap* mapFrontal;
 	Player* player;
+	std::vector<Snake*> snakes;
+	HUD* hud;
 	ShaderProgram texProgram;
 	float currentTime;
 	glm::mat4 projection;
 
-	// Plataformas móviles
+	const float SNAKE_MIN_X = 2450.0f;
+	const float SNAKE_MAX_X = 2950.0f;
+	float snakeSpawnTimer;
+	const float SNAKE_SPAWN_INTERVAL = 3000.0f;
+
+	// Plataformas mï¿½viles
 	std::vector<MovingPlatform*> movingPlatforms;
 
-	// Variables de cámara
+	// Variables de cï¿½mara
 	bool followHorizontal;
 	int currentCheckpoint;
 	bool isAnimating;

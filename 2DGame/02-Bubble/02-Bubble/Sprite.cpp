@@ -32,6 +32,7 @@ Sprite::Sprite(const glm::vec2 &quadSize, const glm::vec2 &sizeInSpritesheet, Te
 	shaderProgram = program;
 	currentAnimation = -1;
 	position = glm::vec2(0.f);
+	alpha = 1.0f;
 }
 
 void Sprite::update(int deltaTime)
@@ -54,12 +55,29 @@ void Sprite::render() const
 	shaderProgram->setUniformMatrix4f("modelview", modelview);
 	shaderProgram->setUniform2f("texCoordDispl", texCoordDispl.x, texCoordDispl.y);
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Establecer el color con el alpha especificado
+	shaderProgram->setUniform4f("color", 1.0f, 1.0f, 1.0f, alpha);
 	texture->use();
 	glBindVertexArray(vao);
 	glEnableVertexAttribArray(posLocation);
 	glEnableVertexAttribArray(texCoordLocation);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisable(GL_TEXTURE_2D);
+
+	// Desactivar blend después de dibujar
+	glDisable(GL_BLEND);
+	glDisable(GL_TEXTURE_2D);
+}
+
+void Sprite::setAlpha(float alpha)
+{
+	// Asegurar que alpha esté entre 0.0 y 1.0
+	if (alpha < 0.0f) alpha = 0.0f;
+	if (alpha > 1.0f) alpha = 1.0f;
+	this->alpha = alpha;
 }
 
 void Sprite::free()
