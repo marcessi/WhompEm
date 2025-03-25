@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
@@ -105,6 +105,7 @@ void Scene::init()
 	mapFrontal = TileMap::createTileMap("levels/sacredwoods_frontal.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     player = new Player();
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+    player->setAudioManager(&audioManager);
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
     player->setTileMap(mapWalls, mapPlatforms);
 
@@ -239,7 +240,13 @@ void Scene::initMenus()
 }
 
 void Scene::initSounds() {
-	audioManager.init();
+    audioManager.init();
+
+    // Cargar efectos de sonido
+    audioManager.loadSound("jump", "sounds/jump1.mp3");
+    audioManager.loadSound("spear", "sounds/spear.mp3");
+    audioManager.loadSound("menu_move", "sounds/menu_move.mp3");
+    audioManager.loadSound("menu_select", "sounds/menu_select.mp3");
 }
 
 void Scene::update(int deltaTime)
@@ -272,22 +279,25 @@ void Scene::handleMenuInput()
         {
             currentOption = static_cast<MainMenuOption>((currentOption + 1) % 3); // 3 opciones en total
             keyPressed = true;
+            audioManager.playSound("menu_move", 0.5f);
         }
         else if (Game::instance().getKey(GLFW_KEY_UP))
         {
             currentOption = static_cast<MainMenuOption>((currentOption + 2) % 3); // +2 para dar la vuelta correctamente
             keyPressed = true;
+            audioManager.playSound("menu_move", 0.5f);
         }
 
         // Selecci�n de opci�n
         else if (Game::instance().getKey(GLFW_KEY_ENTER) || Game::instance().getKey(GLFW_KEY_SPACE))
         {
             keyPressed = true;
+            audioManager.playSound("menu_select", 0.6f);
             switch (currentOption)
             {
             case OPTION_START_GAME:
                 gameState = GAMEPLAY;
-				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.5f);
+				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.1f);
                 break;
             case OPTION_INSTRUCTIONS:
                 gameState = MENU_INSTRUCTIONS;

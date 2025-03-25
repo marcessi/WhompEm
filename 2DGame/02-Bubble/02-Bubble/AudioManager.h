@@ -1,3 +1,6 @@
+#ifndef AUDIOMANAGER_H
+#define AUDIOMANAGER_H
+
 #include <fmod.hpp>
 #include <unordered_map>
 #include <string>
@@ -26,3 +29,5 @@ private:
     FMOD::Channel* musicChannel;
     std::unordered_map<std::string, FMOD::Sound*> soundEffects;
 };
+
+#endif // AUDIOMANAGER_H

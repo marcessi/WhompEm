@@ -21,6 +21,9 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	audioManager = nullptr;
+	jumpSoundPlayed = false;
+	spearSoundPlayed = false;
 	knockbackAngle = 0;
 	knockbackJumping = false;
 	knockbackDir = 0;
@@ -165,9 +168,6 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 void Player::update(int deltaTime)
 {
-	
-	
-
     sprite_lanza->update(deltaTime);
     sprite->update(deltaTime);
 
@@ -622,6 +622,7 @@ void Player::update(int deltaTime)
 					bJumping = true;
 					jumpAngle = 0;
 					startY = posPlayer.y;
+					audioManager->playSound("jump", 1.0f);
 				}
 			}
 			else {
@@ -659,7 +660,16 @@ void Player::update(int deltaTime)
 		}
 	}
 
-
+	// Reproducir sonido de lanza
+	if (Game::instance().getKey(GLFW_KEY_X)) {
+		if (!spearSoundPlayed && audioManager) {
+			audioManager->playSound("spear", 0.3f);
+			spearSoundPlayed = true;
+		}
+	}
+	else {
+		spearSoundPlayed = false;
+	}
 
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 }
@@ -700,6 +710,11 @@ void Player::setLeftLimit(float leftLimit)
 void Player::setMovingPlatforms(const std::vector<MovingPlatform*>* platforms)
 {
 	movingPlatforms = platforms;
+}
+
+void Player::setAudioManager(AudioManager* audioManager)
+{
+	this->audioManager = audioManager;
 }
 
 pair<glm::ivec4, int> Player::getplayerLifes() {

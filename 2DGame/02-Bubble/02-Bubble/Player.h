@@ -3,7 +3,8 @@
 
 #include "Sprite.h"
 #include "TileMap.h"
-#include "MovingPlatform.h"  // Agregamos esta inclusión
+#include "MovingPlatform.h"
+#include "AudioManager.h"
 #include <vector>           // Para std::vector
 
 // Player is basically a Sprite that represents the player. As such it has
@@ -23,7 +24,8 @@ public:
     void render();
 
     void setTileMap(TileMap* tileMapWalls, TileMap* tileMapPlatforms);
-    void setMovingPlatforms(const std::vector<MovingPlatform*>* platforms); // Nuevo método
+    void setMovingPlatforms(const std::vector<MovingPlatform*>* platforms);
+    void setAudioManager(AudioManager* audioManager);
     void setPosition(const glm::vec2& pos);
     bool checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize);
 
@@ -62,6 +64,10 @@ private:
     int knockbackAngle;
     int knockbackStartY;
     int knockbackDir; // 1 o -1 según dirección
+
+    AudioManager* audioManager;
+    bool jumpSoundPlayed;
+    bool spearSoundPlayed;
 
 
 };
