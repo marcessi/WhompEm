@@ -175,3 +175,8 @@ bool Snake::collisionWithPlayer(const glm::ivec2& playerPos, const glm::ivec2& p
 
     return collisionX && collisionY;
 }
+
+glm::ivec2 Snake::getSize() const {
+    // Devuelve el tamaño del sprite de la serpiente
+    return glm::ivec2(32, 32); // Ajustar al tamaño real de la serpiente
+}

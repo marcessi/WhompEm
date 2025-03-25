@@ -47,7 +47,7 @@ public:
 
 	int getCurrentCheckpoint();
 	float getCameraLimit();
-	void setPlayerHealth(int health);
+	void setPlayerHealth(const glm::ivec4& health);
 	void setPlayerLights(int lights);
 
 private:

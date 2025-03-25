@@ -109,8 +109,10 @@ void Scene::init()
 
     hud = new HUD();
     hud->init(glm::ivec2(2, 2), texProgram);
-    hud->setHealth(4);
+    
 
+    pair<glm::ivec4, int> playerLifes = player->getplayerLifes();
+    hud->syncWithPlayer(playerLifes.first, playerLifes.second);
 
     // Inicializar las plataformas m�viles
     // Plataforma 1
@@ -201,10 +203,17 @@ void Scene::initMenus()
     Texture* texControls = new Texture();
     Texture* texCredits = new Texture();
 
+
     // Cargar las texturas del men� principal
     texStart->loadFromFile("images/start.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texSelControls->loadFromFile("images/selected_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texSelCredits->loadFromFile("images/selected_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Cargar las texturas del men� principal
+    texStart->loadFromFile("images/main_start.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelControls->loadFromFile("images/main_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texSelCredits->loadFromFile("images/main_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
 
     // Cargar las texturas de instrucciones y cr�ditos
     texControls->loadFromFile("images/controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -320,8 +329,13 @@ void Scene::updateMenu(int deltaTime)
 void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
+    pair<glm::ivec4, int> prevLifeState = player->getplayerLifes();
     player->update(deltaTime);
+    pair<glm::ivec4, int> currentLifeState = player->getplayerLifes();
+
     glm::ivec2 posPlayer = player->getPosition();
+
+    
     // Actualizar las plataformas m�viles
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
@@ -329,7 +343,11 @@ void Scene::updateGameplay(int deltaTime)
 
     updateSnakes(deltaTime);
 
+    
 
+    // Si el jugador recibió daño, actualizar el HUD inmediatamente
+        hud->syncWithPlayer(currentLifeState.first, currentLifeState.second);
+    
 
     // Verificar si el jugador ha alcanzado el punto de control actual
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
@@ -471,13 +489,24 @@ void Scene::updateSnakes(int deltaTime)
         Snake* snake = snakes[i];
         snake->update(deltaTime);
 
-        // Comprobar colisiones con el jugador
+        glm::ivec2 snakePos = snake->getPosition();
+        glm::ivec2 snakeSize = snake->getSize(); // Asumimos que la clase Snake tiene un método getSize()
+
+        // Comprobar si la lanza del jugador ha golpeado a la serpiente
+        if (player->checkSpearCollision(snakePos, snakeSize)) {
+            // Eliminar la serpiente al ser golpeada por la lanza
+            delete snake;
+            snakes.erase(snakes.begin() + i);
+            --i; // Ajustar el índice después de eliminar
+            continue; // Continuar con la siguiente serpiente
+        }
+
+        // Comprobar colisiones con el jugador (si no fue eliminada)
         if (snake->collisionWithPlayer(posPlayer, glm::ivec2(16, 32))) {
             player->isHitted(); // El jugador recibe daño
         }
 
         // Eliminar serpientes que ya no son visibles en la cámara
-        glm::ivec2 snakePos = snake->getPosition();
         if (snakePos.x < camX - 64 || snakePos.x > camX + CAMERA_WIDTH + 64 ||
             snakePos.y < camY - 64 || snakePos.y > camY + CAMERA_HEIGHT + 64) {
             delete snake;
@@ -578,7 +607,7 @@ float Scene::getCameraLimit()
     return cameraLimits[currentCheckpoint].first;
 }
 
-void Scene::setPlayerHealth(int health)
+void Scene::setPlayerHealth(const glm::ivec4& health)
 {
     if (hud != nullptr)
         hud->setHealth(health);

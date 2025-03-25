@@ -4,10 +4,11 @@
 
 HUD::HUD()
 {
-    health = maxHealth = 4;
+    
     lights = maxLights = 2;
-    score = 0;
+
     hasWeapon = false;
+	heartsLogic = glm::ivec4(4, 4, 4, 4);
 }
 
 HUD::~HUD()
@@ -61,7 +62,7 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
     spritesheet_hearts.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
 
     // Crear 4 corazones, uno debajo del otro
-    for (int i = 0; i < maxHealth; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         Sprite* heart = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_hearts, &shaderProgram);
 
@@ -97,39 +98,44 @@ void HUD::update(int deltaTime)
         light->update(deltaTime);
 
     weaponIcon->update(deltaTime);
+
+    updateHeartAnimations();
+    updateLightAnimations();
 }
 
 void HUD::render()
 {
     // Renderizar todos los elementos de la HUD
-    weaponIcon->render();
 
-    for (auto& light : lightsIcons)
-        light->render();
+    
+        // Renderizar todos los elementos de la HUD
+        weaponIcon->render();
 
-    for (auto& heart : hearts)
-        heart->render();
+        // Solo renderizar las luces activas
+        for (int i = 0; i < lights; ++i) {
+            lightsIcons[i]->render();
+        }
+
+        for (auto& heart : hearts)
+            heart->render();
+   }
+
+
+void HUD::setHealth(const glm::ivec4& newHearts)
+{
+    heartsLogic = newHearts;
+    updateHeartAnimations();
 }
 
-void HUD::setHealth(int health)
+
+void HUD::setLights(int newLights)
 {
-    this->health = health;
+    lights = newLights;
+    updateLightAnimations();
 
-    // Actualizar animaciones de los corazones
-    for (int i = 0; i < maxHealth; ++i)
-    {
-        if (i < health)
-            hearts[i]->changeAnimation(FULL_HEART);
-        else
-            hearts[i]->changeAnimation(EMPTY_HEART);
-    }
-}
-
-void HUD::setLights(int lights)
-{
-    this->lights = lights;
-
-    // Actualizar animaciones de las luces (puedes implementar esto si necesitas diferentes estados)
+    // Comprobar si se ha perdido el juego
+    if (lights <= 0)
+        gameover = true;
 }
 
 void HUD::updatePosition(float cameraX, float cameraY)
@@ -140,7 +146,46 @@ void HUD::updatePosition(float cameraX, float cameraY)
         lightsIcons[i]->setPosition(glm::vec2(cameraX + screenPos.x + 18 + i * 18, cameraY + screenPos.y));
     }
 
-    for (int i = 0; i < maxHealth; ++i) {
+    for (int i = 0; i < 4; ++i) {
         hearts[i]->setPosition(glm::vec2(cameraX + screenPos.x, cameraY + screenPos.y + 14 + i * 10));
     }
+}
+
+void HUD::updateLightAnimations()
+{
+    // Actualizar las animaciones de las luces según el valor de lights
+    // Solo configuramos las luces visibles como LIGHT_ON
+    for (int i = 0; i < lights; ++i) {
+        lightsIcons[i]->changeAnimation(LIGHT_ON);
+    }
+
+    // No es necesario cambiar a LIGHT_OFF ya que no se renderizarán
+}
+
+void HUD::updateHeartAnimations()
+{
+	// Actualizar las animaciones de los corazones según el valor de heartsLogic
+	for (int i = 0; i < 4; ++i) {
+		int heartLevel = heartsLogic[i];
+		if (heartLevel == 4) {
+			hearts[i]->changeAnimation(FULL_HEART);
+		}
+		else if (heartLevel == 3) {
+			hearts[i]->changeAnimation(CASI_FULL);
+		}
+		else if (heartLevel == 2) {
+			hearts[i]->changeAnimation(CASI_EMPTY);
+		}
+		else {
+			hearts[i]->changeAnimation(EMPTY_HEART);
+		}
+	}
+}
+
+void HUD::syncWithPlayer(const glm::ivec4& playerHearts, int playerLights)
+{
+    heartsLogic = playerHearts;
+    lights = playerLights;
+    updateHeartAnimations();
+    updateLightAnimations();
 }

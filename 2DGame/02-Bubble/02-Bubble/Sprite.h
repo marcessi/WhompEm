@@ -35,6 +35,7 @@ public:
 	int key_frame() const;
 	bool isAnimationFinished() const;
 	
+	void setAlpha(float alpha);
 	void setPosition(const glm::vec2 &pos);
 
 private:
@@ -48,6 +49,7 @@ private:
 	float timeAnimation;
 	glm::vec2 texCoordDispl;
 	vector<AnimKeyframes> animations;
+	float alpha;
 
 };
 

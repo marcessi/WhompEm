@@ -21,6 +21,14 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	knockbackAngle = 0;
+	knockbackJumping = false;
+	knockbackDir = 0;
+	knockbackStartY = 0;
+	player_visible = true;
+	invulnerable = false;
+	hitTimer = 0;
+	invulnerableTimer = 0;
 	hearts = glm::vec4(4, 4, 4, 4);
 	ligths = 2;
 	first_attack = false;
@@ -163,25 +171,218 @@ void Player::update(int deltaTime)
     sprite_lanza->update(deltaTime);
     sprite->update(deltaTime);
 
+	if (hitted) {
+		hitTimer += deltaTime;
+		invulnerable = true;
+
+		// Mostrar animación de golpe durante un tiempo corto
+		if (hitTimer > 300) { // 0.3 segundos
+			hitted = false;
+			spear_visible = false;
+			hitTimer = 0;
+			invulnerable = true;
+			invulnerableTimer = 0;
+			knockbackJumping = false;
+			knockbackAngle = 0;
+			knockbackDir = 0;
+			knockbackStartY = 0;
+			sprite->setAlpha(1.0f);	
+		}
+	}
+
+	if (knockbackJumping) {
+		// Usar la misma lógica que el salto normal, pero con incrementos más rápidos
+		knockbackAngle += JUMP_ANGLE_STEP * 3; // Más rápido que el salto normal
+
+		if (knockbackAngle >= 180) {
+			knockbackJumping = false;
+
+			
+		}
+		else {
+			// Mover horizontalmente según la dirección
+			if (knockbackDir != 0) {
+				posPlayer.x += knockbackDir * 2;
+			}
+
+			// Calcular nueva posición Y - salto más pequeño (1/4 de la altura normal)
+			posPlayer.y = int(knockbackStartY - (JUMP_HEIGHT / 4) * sin(3.14159f * knockbackAngle / 180.f));
+
+			// Verificar colisiones con paredes
+			int hitboxWidth = 16;
+			int hitboxHeight = 32;
+			int hitboxOffsetX = (32 - hitboxWidth) / 2;
+
+			if ((knockbackDir < 0 && mapWalls->collisionMoveLeft(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+				glm::ivec2(hitboxWidth, hitboxHeight))) ||
+				(knockbackDir > 0 && mapWalls->collisionMoveRight(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight)))) {
+				knockbackDir = 0; // Detener movimiento horizontal si choca con una pared
+			}
+
+			// Comprobar colisiones con el suelo en la fase de descenso
+			if (knockbackAngle > 90) {
+				bool collisionDetected = false;
+
+				// Primero comprobar colisiones con paredes sólidas (mapWalls)
+				if (mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+					knockbackJumping = false;
+					collisionDetected = true;
+				}
+				// Luego comprobar colisiones con plataformas
+				else if (mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+					knockbackJumping = false;
+					collisionDetected = true;
+				}
+				// Finalmente, comprobar colisiones con plataformas móviles
+				else if (movingPlatforms != nullptr) {
+					for (auto platform : *movingPlatforms) {
+						float tempPosY = posPlayer.y;
+						if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+							glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
+							posPlayer.y = tempPosY;
+							knockbackJumping = false;
+							collisionDetected = true;
+							break;
+						}
+					}
+				}
+
+				// Si no hay colisión detectada y estamos en la parte final del arco,
+				// aplicar gravedad adicional para acelerar la caída
+				if (!collisionDetected && knockbackAngle > 150) {
+					posPlayer.y += FALL_STEP; // Aplicar gravedad adicional
+				}
+			}
+		}
+
+		// Mostrar animación de daño durante el knockback
+		if (dir == LEFT) {
+			sprite->changeAnimation(DIE_LEFT);
+		}
+		else {
+			sprite->changeAnimation(DIE_RIGHT);
+		}
+	}
+
+	// Gestionar invulnerabilidad (parpadeo)
+	if (invulnerable) {
+		invulnerableTimer += deltaTime;
+		sprite->setAlpha(0.7f);
+
+		// Hacer que el jugador parpadee (alternar visibilidad cada 100ms)
+		if ((invulnerableTimer / 100) % 2 == 0) {
+			player_visible = true;
+		}
+		else {
+			player_visible = false;
+		}
+		if (hitted)
+			player_visible = true;
+
+		// Después de 2 segundos, desactivar la invulnerabilidad
+		if (invulnerableTimer > 2000) { // 2 segundos
+			invulnerable = false;
+			sprite->setAlpha(1.0f);
+			player_visible = true; // Asegurarse de que el sprite es visible
+		}
+	}
+
     // Guardar la posición previa para restaurarla en caso de colisión
     glm::ivec2 prevPos = posPlayer;
 
 	int hitboxWidth = 16;
 	int hitboxHeight = 32;
 	int hitboxOffsetX = (32 - hitboxWidth) / 2;
-
-	if (Game::instance().getKey(GLFW_KEY_DOWN))
-	{
-		if (Game::instance().getKey(GLFW_KEY_LEFT)) {
-			dir = LEFT;
-		}
-		else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
-			dir = RIGHT;
-		}
+	// Si está golpeado, mostrar la animación de golpe pero permitir movimiento
+	if (hitted) {
 		if (dir == LEFT) {
+			sprite->changeAnimation(DIE_LEFT);
+		}
+		else {
+			sprite->changeAnimation(DIE_RIGHT);
+		}
+	}
+	else {
+		if (Game::instance().getKey(GLFW_KEY_DOWN))
+		{
+			if (Game::instance().getKey(GLFW_KEY_LEFT)) {
+				dir = LEFT;
+			}
+			else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
+				dir = RIGHT;
+			}
+			if (dir == LEFT) {
+				if (Game::instance().getKey(GLFW_KEY_X)) {
+					if (sprite->animation() != ATTACK_DOWN_LEFT)sprite->changeAnimation(ATTACK_DOWN_LEFT);
+					spear_visible = true;
+
+					if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+						sprite_lanza->changeAnimation(THROW_LEFT);
+					}
+					else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+						first_attack = true;
+						sprite_lanza->changeAnimation(STANDS_LEFT);
+					}
+					else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+						sprite_lanza->changeAnimation(STANDS_LEFT);
+					}
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18)));
+
+				}
+
+				else
+					sprite->changeAnimation(DOWN_LEFT);
+			}
+			else if (dir == RIGHT) {
+				if (Game::instance().getKey(GLFW_KEY_X)) {
+					if (sprite->animation() != ATTACK_DOWN_RIGHT) sprite->changeAnimation(ATTACK_DOWN_RIGHT);
+					spear_visible = true;
+
+					if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+
+						sprite_lanza->changeAnimation(THROW_RIGHT);
+					}
+					else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+
+						first_attack = true;
+						sprite_lanza->changeAnimation(STANDS_RIGHT);
+					}
+					else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+						first_attack = true;
+						sprite_lanza->changeAnimation(STANDS_RIGHT);
+					}
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18)));
+
+				}
+
+				else
+					sprite->changeAnimation(DOWN_RIGHT);
+			}
+		}
+		else if (Game::instance().getKey(GLFW_KEY_UP))
+		{
+			if (Game::instance().getKey(GLFW_KEY_LEFT)) {
+				dir = LEFT;
+			}
+			else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
+				dir = RIGHT;
+			}
+			if (dir == LEFT)
+				sprite->changeAnimation(PROTECT_LEFT);
+			else if (dir == RIGHT)
+				sprite->changeAnimation(PROTECT_RIGHT);
+		}
+		// Manejar el movimiento horizontal
+		else if (Game::instance().getKey(GLFW_KEY_LEFT))
+		{
+			dir = LEFT;
 			if (Game::instance().getKey(GLFW_KEY_X)) {
-				if (sprite->animation() != ATTACK_DOWN_LEFT)sprite->changeAnimation(ATTACK_DOWN_LEFT);
 				spear_visible = true;
+				if (sprite->animation() != ATTACK_LEFT_MOVING)
+					sprite->changeAnimation(ATTACK_LEFT_MOVING);
 
 				if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
 					sprite_lanza->changeAnimation(THROW_LEFT);
@@ -193,18 +394,31 @@ void Player::update(int deltaTime)
 				else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
 					sprite_lanza->changeAnimation(STANDS_LEFT);
 				}
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18)));
+
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
 
 			}
+			else {
+				if (sprite->animation() != MOVE_LEFT)
+					sprite->changeAnimation(MOVE_LEFT);
+			}
 
-			else
-				sprite->changeAnimation(DOWN_LEFT);
+			posPlayer.x -= 2;
+
+			if (mapWalls->collisionMoveLeft(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+				glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x < leftLimit)
+			{
+				posPlayer.x = prevPos.x;
+				sprite->changeAnimation(STAND_LEFT);
+			}
 		}
-		else if (dir == RIGHT) {
+		else if (Game::instance().getKey(GLFW_KEY_RIGHT))
+		{
+			dir = RIGHT;
 			if (Game::instance().getKey(GLFW_KEY_X)) {
-				if (sprite->animation() != ATTACK_DOWN_RIGHT) sprite->changeAnimation(ATTACK_DOWN_RIGHT);
 				spear_visible = true;
-
+				if (sprite->animation() != ATTACK_RIGHT_MOVING)
+					sprite->changeAnimation(ATTACK_RIGHT_MOVING);
 				if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
 
 					sprite_lanza->changeAnimation(THROW_RIGHT);
@@ -218,317 +432,233 @@ void Player::update(int deltaTime)
 					first_attack = true;
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18)));
-
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
 			}
-
-			else
-				sprite->changeAnimation(DOWN_RIGHT);
+			else {
+				if (sprite->animation() != MOVE_RIGHT)
+					sprite->changeAnimation(MOVE_RIGHT);
+			}
+			posPlayer.x += 2;
+			// Solo comprobar colisiones con mapWalls, no con mapPlatforms
+			if (mapWalls->collisionMoveRight(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+				glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x > 4064.f)
+			{
+				posPlayer.x = prevPos.x;
+				sprite->changeAnimation(STAND_RIGHT);
+			}
 		}
-	}
-	else if (Game::instance().getKey(GLFW_KEY_UP))
-	{
-		if (Game::instance().getKey(GLFW_KEY_LEFT)) {
-			dir = LEFT;
-		}
-		else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
-			dir = RIGHT;
-		}
-		if (dir == LEFT)
-			sprite->changeAnimation(PROTECT_LEFT);
-		else if (dir == RIGHT)
-			sprite->changeAnimation(PROTECT_RIGHT);
-	}
-    // Manejar el movimiento horizontal
-    else if (Game::instance().getKey(GLFW_KEY_LEFT))
-    {
-		dir = LEFT;
-		if (Game::instance().getKey(GLFW_KEY_X)) {
+		else if (Game::instance().getKey(GLFW_KEY_X))
+		{
 			spear_visible = true;
-			if (sprite->animation() != ATTACK_LEFT_MOVING)
-				sprite->changeAnimation(ATTACK_LEFT_MOVING);
+			if (dir == LEFT) {
+				if (sprite->animation() != ATTACK_LEFT) sprite->changeAnimation(ATTACK_LEFT);
 
-			if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-				sprite_lanza->changeAnimation(THROW_LEFT);
+				if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+					sprite_lanza->changeAnimation(THROW_LEFT);
+				}
+				else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+					first_attack = true;
+					sprite_lanza->changeAnimation(STANDS_LEFT);
+				}
+
+
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
 			}
-			else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
-				first_attack = true;
-				sprite_lanza->changeAnimation(STANDS_LEFT);
+			else if (dir == RIGHT) {
+				if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
+
+				if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+					sprite_lanza->changeAnimation(THROW_RIGHT);
+				}
+				else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+					first_attack = true;
+					sprite_lanza->changeAnimation(STANDS_RIGHT);
+				}
+
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
 			}
-			else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
-				sprite_lanza->changeAnimation(STANDS_LEFT);
-			}
-
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
-
-		}
-		else {
-			if (sprite->animation() != MOVE_LEFT)
-				sprite->changeAnimation(MOVE_LEFT);
-		}
-
-        posPlayer.x -= 2;
-
-		if (mapWalls->collisionMoveLeft(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-			glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x < leftLimit)
-		{
-			posPlayer.x = prevPos.x;
-			sprite->changeAnimation(STAND_LEFT);
-		}
-    }
-    else if (Game::instance().getKey(GLFW_KEY_RIGHT))
-    {
-		dir = RIGHT;
-		if (Game::instance().getKey(GLFW_KEY_X)) {
-			spear_visible = true;
-			if (sprite->animation() != ATTACK_RIGHT_MOVING)
-				sprite->changeAnimation(ATTACK_RIGHT_MOVING);
-			if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-
-				sprite_lanza->changeAnimation(THROW_RIGHT);
-			}
-			else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
-
-				first_attack = true;
-				sprite_lanza->changeAnimation(STANDS_RIGHT);
-			}
-			else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
-				first_attack = true;
-				sprite_lanza->changeAnimation(STANDS_RIGHT);
-			}
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
-		}
-		else {
-			if (sprite->animation() != MOVE_RIGHT)
-				sprite->changeAnimation(MOVE_RIGHT);
-		}
-        posPlayer.x += 2;
-        // Solo comprobar colisiones con mapWalls, no con mapPlatforms
-		if (mapWalls->collisionMoveRight(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-			glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x > 4064.f)
-		{
-			posPlayer.x = prevPos.x;
-			sprite->changeAnimation(STAND_RIGHT);
-		}
-    }
-    else if (Game::instance().getKey(GLFW_KEY_X))
-    {
-		spear_visible = true;
-		if (dir == LEFT) {
-			if (sprite->animation() != ATTACK_LEFT) sprite->changeAnimation(ATTACK_LEFT);
-
-			if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-				sprite_lanza->changeAnimation(THROW_LEFT);
-			}
-			else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
-				first_attack = true;
-				sprite_lanza->changeAnimation(STANDS_LEFT);
-			}
-
-
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
-		}
-		else if (dir == RIGHT) {
-			if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
-
-			if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-				sprite_lanza->changeAnimation(THROW_RIGHT);
-			}
-			else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
-				first_attack = true;
-				sprite_lanza->changeAnimation(STANDS_RIGHT);
-			}
-
-			sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
-		}
-    }
-    else
-    {
-        if (dir == LEFT)
-            sprite->changeAnimation(STAND_LEFT);
-        else if (dir == RIGHT)
-            sprite->changeAnimation(STAND_RIGHT);
-    }
-
-	if (spear_visible)
-	{
-
-		if (!Game::instance().getKey(GLFW_KEY_X))
-		{
-
-			if(!Game::instance().getKey(GLFW_KEY_1) && !Game::instance().getKey(GLFW_KEY_2)) spear_visible = false;
-			first_attack = false;
-		}
-	}
-
-	if (bJumping)
-	{
-		jumpAngle += JUMP_ANGLE_STEP;
-		if (jumpAngle == 180)
-		{
-			bJumping = false;
-			posPlayer.y = startY;
 		}
 		else
 		{
-			// Guardar posición Y antes de saltar
-			int prevY = posPlayer.y;
+			if (dir == LEFT)
+				sprite->changeAnimation(STAND_LEFT);
+			else if (dir == RIGHT)
+				sprite->changeAnimation(STAND_RIGHT);
+		}
 
-			// Calcular nueva posición Y
-			posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+		if (spear_visible)
+		{
 
-			// Verificar si el jugador está subiendo o bajando
-			bool movingDown = posPlayer.y > prevY;
+			if (!Game::instance().getKey(GLFW_KEY_X))
+			{
 
-			if (Game::instance().getKey(GLFW_KEY_DOWN)) {
-				spear_visible = true;
-				if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
-				if (dir == RIGHT) {
-					if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+				if (!Game::instance().getKey(GLFW_KEY_1) && !Game::instance().getKey(GLFW_KEY_2)) spear_visible = false;
+				first_attack = false;
+			}
+		}
+
+		if (bJumping)
+		{
+			jumpAngle += JUMP_ANGLE_STEP;
+			if (jumpAngle == 180)
+			{
+				bJumping = false;
+				posPlayer.y = startY;
+			}
+			else
+			{
+				// Guardar posición Y antes de saltar
+				int prevY = posPlayer.y;
+
+				// Calcular nueva posición Y
+				posPlayer.y = int(startY - JUMP_HEIGHT * sin(3.14159f * jumpAngle / 180.f));
+
+				// Verificar si el jugador está subiendo o bajando
+				bool movingDown = posPlayer.y > prevY;
+
+				if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+					spear_visible = true;
+					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
+					if (dir == RIGHT) {
+						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+
+					}
+					else {
+						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+
+					}
+
+				}
+				else if (Game::instance().getKey(GLFW_KEY_UP)) {
+					spear_visible = true;
+
+					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
+					if (dir == RIGHT) {
+						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+
+					}
+					else {
+						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+
+					}
 
 				}
 				else {
-					if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
-
+					if (dir == LEFT)
+						sprite->changeAnimation(JUMP_LEFT);
+					else
+						sprite->changeAnimation(JUMP_RIGHT);
 				}
 
-			}
-			else if (Game::instance().getKey(GLFW_KEY_UP)) {
-				spear_visible = true;
-
-				if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
-				if (dir == RIGHT) {
-					if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
-
-				}
-				else {
-					if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
-
-				}
-
-			}
-			else {
-				if (dir == LEFT)
-					sprite->changeAnimation(JUMP_LEFT);
-				else
-					sprite->changeAnimation(JUMP_RIGHT);
-			}
-
-			if (jumpAngle > 90) {
-				// Primero comprobar colisiones con paredes sólidas (mapWalls)
-				if (mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
-					bJumping = false;
-				}
-				// Luego comprobar colisiones con plataformas solo si está cayendo
-				else if (movingDown && mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
-					bJumping = false;
-				}
-				// Finalmente, comprobar colisiones con plataformas móviles
-				else if (movingDown && movingPlatforms != nullptr) {
-					for (auto platform : *movingPlatforms) {
-						float tempPosY = posPlayer.y;
-						if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-							glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
-							posPlayer.y = tempPosY;
-							bJumping = false;
-							break;
+				if (jumpAngle > 90) {
+					// Primero comprobar colisiones con paredes sólidas (mapWalls)
+					if (mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+						glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+						bJumping = false;
+					}
+					// Luego comprobar colisiones con plataformas solo si está cayendo
+					else if (movingDown && mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+						glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y)) {
+						bJumping = false;
+					}
+					// Finalmente, comprobar colisiones con plataformas móviles
+					else if (movingDown && movingPlatforms != nullptr) {
+						for (auto platform : *movingPlatforms) {
+							float tempPosY = posPlayer.y;
+							if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+								glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
+								posPlayer.y = tempPosY;
+								bJumping = false;
+								break;
+							}
 						}
 					}
 				}
 			}
-        }			
-    }
-    else
-    {
-        
-        int prevY = posPlayer.y; // Guardamos la posición Y antes de caer
-        posPlayer.y += FALL_STEP;
+		}
+		else
+		{
 
-		// Verificar que el jugador está cayendo
-		bool isFalling = posPlayer.y > prevY;
+			int prevY = posPlayer.y; // Guardamos la posición Y antes de caer
+			posPlayer.y += FALL_STEP;
 
-		// Primero comprobar colisiones con paredes sólidas (mapWalls)
-		bool collisionWithWalls = mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-			glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y);
+			// Verificar que el jugador está cayendo
+			bool isFalling = posPlayer.y > prevY;
 
-		// Luego comprobar colisiones con plataformas estáticas solo si está cayendo
-		bool collisionWithPlatforms = false;
-		if (isFalling) {
-			collisionWithPlatforms = mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+			// Primero comprobar colisiones con paredes sólidas (mapWalls)
+			bool collisionWithWalls = mapWalls->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
 				glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y);
-		}
 
-		// Comprobar colisiones con plataformas móviles
-		bool collisionWithMovingPlatforms = false;
-		if (isFalling && movingPlatforms != nullptr) {
-			for (auto platform : *movingPlatforms) {
-				float tempPosY = posPlayer.y;
-				if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
-					glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
-					posPlayer.y = tempPosY;
-					collisionWithMovingPlatforms = true;
-					break;
+			// Luego comprobar colisiones con plataformas estáticas solo si está cayendo
+			bool collisionWithPlatforms = false;
+			if (isFalling) {
+				collisionWithPlatforms = mapPlatforms->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+					glm::ivec2(hitboxWidth, hitboxHeight), &posPlayer.y);
+			}
+
+			// Comprobar colisiones con plataformas móviles
+			bool collisionWithMovingPlatforms = false;
+			if (isFalling && movingPlatforms != nullptr) {
+				for (auto platform : *movingPlatforms) {
+					float tempPosY = posPlayer.y;
+					if (platform->collisionMoveDown(glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y),
+						glm::ivec2(hitboxWidth, hitboxHeight), &tempPosY)) {
+						posPlayer.y = tempPosY;
+						collisionWithMovingPlatforms = true;
+						break;
+					}
 				}
 			}
-		}
 
-        // Comprobar colisiones con el suelo
-        if (collisionWithWalls || collisionWithPlatforms || collisionWithMovingPlatforms)
-        {
-            if (Game::instance().getKey(GLFW_KEY_Z))
-            {
-                bJumping = true;
-                jumpAngle = 0;
-                startY = posPlayer.y;
-            }
-        }
-		else {
-			if (Game::instance().getKey(GLFW_KEY_DOWN)) {
-				spear_visible = true;
-				if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
-				if (dir == RIGHT) {
-					if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
-				}
-				else {
-					if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
-				}
-			}
-			else if (Game::instance().getKey(GLFW_KEY_UP)) {
-				spear_visible = true;
-				if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
-				if (dir == RIGHT) {
-					if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
-				}
-				else {
-					if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+			// Comprobar colisiones con el suelo
+			if (collisionWithWalls || collisionWithPlatforms || collisionWithMovingPlatforms)
+			{
+				if (Game::instance().getKey(GLFW_KEY_Z))
+				{
+					bJumping = true;
+					jumpAngle = 0;
+					startY = posPlayer.y;
 				}
 			}
 			else {
-				if (dir == LEFT)
-					if (sprite->animation() != JUMP_LEFT) sprite->changeAnimation(JUMP_LEFT);
-				else
-						if (sprite->animation() != JUMP_RIGHT) sprite->changeAnimation(JUMP_RIGHT);
+				if (Game::instance().getKey(GLFW_KEY_DOWN)) {
+					spear_visible = true;
+					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
+					if (dir == RIGHT) {
+						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+					}
+					else {
+						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+					}
+				}
+				else if (Game::instance().getKey(GLFW_KEY_UP)) {
+					spear_visible = true;
+					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
+					if (dir == RIGHT) {
+						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+					}
+					else {
+						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+					}
+				}
+				else {
+					if (dir == LEFT)
+						if (sprite->animation() != JUMP_LEFT) sprite->changeAnimation(JUMP_LEFT);
+						else
+							if (sprite->animation() != JUMP_RIGHT) sprite->changeAnimation(JUMP_RIGHT);
+				}
 			}
 		}
-    }
-	if (hitted) {
-		if (dir == LEFT) {
-			if (sprite->animation() != DIE_LEFT) sprite->changeAnimation(DIE_LEFT);
-		}
-		else {
-			if (sprite->animation() != DIE_RIGHT) sprite->changeAnimation(DIE_RIGHT);
-		}
 	}
+
 
 
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
@@ -538,8 +668,11 @@ void Player::update(int deltaTime)
 
 void Player::render()
 {
-	sprite->render();
-	if(spear_visible)sprite_lanza->render();
+	if (player_visible) {
+		sprite->render();
+		if (spear_visible)sprite_lanza->render();
+	}
+	
 }
 
 void Player::setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms)
@@ -578,24 +711,118 @@ pair<glm::ivec4, int> Player::getplayerLifes() {
 }
 
 void Player::isHitted() {
-	hitted = true;
-	if (hearts.x > 0) {
-		hearts.x--;
-	}
-	else if (hearts.y > 0) {
-		hearts.y--;
-	}
-	else if (hearts.z > 0) {
-		hearts.z--;
-	}
-	else if (hearts.w > 0) {
-		hearts.w--;
-	}
-	else {
-		ligths--;
-		if (ligths == 0) {
-			gameover = true;
+	if (!invulnerable) {
+		hitted = true;
+		invulnerable = true;
+		hitTimer = 0;
+
+		// Iniciar un mini-salto al recibir daño
+		knockbackJumping = true;
+		knockbackAngle = 0;
+		knockbackStartY = posPlayer.y;
+
+		// Comprobar qué teclas están pulsadas para determinar la dirección
+		bool leftPressed = Game::instance().getKey(GLFW_KEY_LEFT);
+		bool rightPressed = Game::instance().getKey(GLFW_KEY_RIGHT);
+
+		if (leftPressed && !rightPressed) {
+			// Si solo se pulsa izquierda, salto hacia la izquierda
+			knockbackDir = -1;
 		}
-		
+		else if (rightPressed && !leftPressed) {
+			// Si solo se pulsa derecha, salto hacia la derecha
+			knockbackDir = 1;
+		}
+		else {
+			// Si no se pulsa ninguna o se pulsan ambas, salto vertical
+			knockbackDir = 0;
+		}
+
+		// Restar vidas
+		if (hearts.w > 0) {
+			hearts.w--;
+		}
+		else if (hearts.z > 0) {
+			hearts.z--;
+		}
+		else if (hearts.y > 0) {
+			hearts.y--;
+		}
+		else if (hearts.x > 0) {
+			hearts.x--;
+		}
+		else {
+			ligths--;
+			hearts = glm::ivec4(4, 4, 4, 4);
+			if (ligths == 0) {
+				gameover = true;
+			}
+		}
 	}
+}
+
+bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize)  {
+	// Solo verificar colisión si la lanza está visible
+	if (!spear_visible) {
+		return false;
+	}
+
+	// Determinar la posición y tamaño de la hitbox de la lanza
+	glm::ivec2 spearPos;
+	glm::ivec2 spearSize(48, 16); // Tamaño base de la lanza
+
+	// Ajustar la posición y tamaño según la dirección y tipo de ataque
+	if (dir == LEFT) {
+		if (sprite->animation() == ATTACK_DOWN_LEFT) {
+			// Lanza apuntando hacia abajo izquierda
+			spearPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 18);
+			spearSize = glm::ivec2(44, 16);
+		}
+		else if (sprite->animation() == ATTACK_LEFT || sprite->animation() == ATTACK_LEFT_MOVING) {
+			// Lanza horizontal hacia la izquierda
+			spearPos = glm::ivec2(posPlayer.x - 43, posPlayer.y + 10);
+			spearSize = glm::ivec2(43, 16);
+		}
+		else if (sprite->animation() == ATTACK_JUMPING_LEFT) {
+			// Lanza apuntando hacia arriba izquierda
+			spearPos = glm::ivec2(posPlayer.x - 16, posPlayer.y - 16);
+			spearSize = glm::ivec2(16, 16);
+		}
+		else if (sprite->animation() == ATTACK_FALLING_LEFT) {
+			// Lanza apuntando hacia abajo izquierda en caída
+			spearPos = glm::ivec2(posPlayer.x - 21, posPlayer.y + 32);
+			spearSize = glm::ivec2(21, 16);
+		}
+	}
+	else { // RIGHT
+		if (sprite->animation() == ATTACK_DOWN_RIGHT) {
+			// Lanza apuntando hacia abajo derecha
+			spearPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+			spearSize = glm::ivec2(28, 16);
+		}
+		else if (sprite->animation() == ATTACK_RIGHT || sprite->animation() == ATTACK_RIGHT_MOVING) {
+			// Lanza horizontal hacia la derecha
+			spearPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 10);
+			spearSize = glm::ivec2(42, 16);
+		}
+		else if (sprite->animation() == ATTACK_JUMPING_RIGHT) {
+			// Lanza apuntando hacia arriba derecha
+			spearPos = glm::ivec2(posPlayer.x + 10, posPlayer.y - 16);
+			spearSize = glm::ivec2(20, 16);
+		}
+		else if (sprite->animation() == ATTACK_FALLING_RIGHT) {
+			// Lanza apuntando hacia abajo derecha en caída
+			spearPos = glm::ivec2(posPlayer.x + 13, posPlayer.y + 32);
+			spearSize = glm::ivec2(25, 16);
+		}
+	}
+
+	// Verificar colisión con el enemigo (AABB collision)
+	bool collisionX = spearPos.x < enemyPos.x + enemySize.x &&
+		spearPos.x + spearSize.x > enemyPos.x;
+
+	bool collisionY = spearPos.y < enemyPos.y + enemySize.y &&
+		spearPos.y + spearSize.y > enemyPos.y;
+
+	return collisionX && collisionY;
 }

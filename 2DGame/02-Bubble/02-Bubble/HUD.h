@@ -22,19 +22,24 @@ public:
     void render();
 
     // Configuración de estado
-    void setHealth(int health);
-    void setLights(int lights);
+    void setHealth(const glm::ivec4& newHearts);
+    void setLights(int newLights);
+    void syncWithPlayer(const glm::ivec4& playerHearts, int playerLights);
+    bool isGameOver() const;
+
 
 	void updatePosition(float cameraX, float cameraY);
 
 private:
     // Posición de la HUD en pantalla
     glm::ivec2 screenPos;
-
+    void updateHeartAnimations();
+    void updateLightAnimations();
     // Datos del juego
-    int health, maxHealth;
-    int lights, maxLights;
-    int score;
+    glm::ivec4 heartsLogic;  // 4 corazones con niveles 0-4
+    int lights;        // Número de luces actuales
+    int maxLights;     // Número máximo de luces
+    bool gameover;
     bool hasWeapon;
 
     // Texturas y sprites
@@ -48,7 +53,9 @@ private:
     Sprite* weaponIcon;
 
     // Animaciones para los elementos de la HUD
-    enum HeartAnimations { FULL_HEART, CASI_FULL, CASI_EMPTY, EMPTY_HEART};
+    enum HeartAnimations {
+		CASI_FULL, CASI_EMPTY, FULL_HEART, EMPTY_HEART
+    };
     enum LightAnimations { LIGHT_ON };
     enum WeaponAnimations { WEAPON_ACTIVE };
 };

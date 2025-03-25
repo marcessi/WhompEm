@@ -20,6 +20,8 @@ public:
     bool collisionWithPlayer(const glm::ivec2 &playerPos, const glm::ivec2 &playerSize) const;
     void setMovementLimits(int minXLimit, int maxXLimit);
 	int getminX() { return minX; }
+    glm::ivec2 getSize() const;
+
 private:
     Direction dir;
     glm::ivec2 tileMapDispl, posSnake;
