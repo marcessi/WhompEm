@@ -251,7 +251,7 @@ void Scene::initSounds() {
 
 void Scene::update(int deltaTime)
 {
-    // Actualizar seg�n el estado actual del juego
+    audioManager.update();
     switch (gameState)
     {
     case MENU_MAIN:

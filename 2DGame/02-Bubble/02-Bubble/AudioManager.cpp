@@ -1,37 +1,46 @@
 #include "AudioManager.h"
-#include <fmod_errors.h>
 #include <iostream>
 
-AudioManager::AudioManager()
-    : soundSystem(nullptr), backgroundMusic(nullptr), musicChannel(nullptr)
-{
-}
+AudioManager::AudioManager() : soundSystem(nullptr), backgroundMusic(nullptr), musicChannel(nullptr) {}
 
-AudioManager::~AudioManager()
-{
+AudioManager::~AudioManager() {
     release();
 }
 
-void AudioManager::init()
-{
+void AudioManager::init() {
     FMOD::System_Create(&soundSystem);
     soundSystem->init(512, FMOD_INIT_NORMAL, nullptr);
 }
 
-void AudioManager::release()
-{
+void AudioManager::update() {
+    if (soundSystem) {
+        // Comprobar qué canales han terminado para limpiarlos
+        auto it = soundChannels.begin();
+        while (it != soundChannels.end()) {
+            bool isPlaying = false;
+            it->second->isPlaying(&isPlaying);
+            if (!isPlaying) {
+                it = soundChannels.erase(it);
+            }
+            else {
+                ++it;
+            }
+        }
+
+        // Actualizar el sistema FMOD
+        soundSystem->update();
+    }
+}
+
+void AudioManager::release() {
+    for (auto& sound : soundEffects) {
+        sound.second->release();
+    }
+    soundEffects.clear();
     if (backgroundMusic) {
         backgroundMusic->release();
         backgroundMusic = nullptr;
     }
-
-    for (auto& sound : soundEffects) {
-        if (sound.second) {
-            sound.second->release();
-        }
-    }
-    soundEffects.clear();
-
     if (soundSystem) {
         soundSystem->close();
         soundSystem->release();
@@ -39,79 +48,66 @@ void AudioManager::release()
     }
 }
 
-void AudioManager::playMusic(const std::string& filePath, bool loop, float volume)
-{
-    stopMusic();
-
+void AudioManager::playMusic(const std::string& filePath, bool loop, float volume) {
+    if (backgroundMusic) {
+        backgroundMusic->release();
+    }
     soundSystem->createStream(filePath.c_str(), loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF, nullptr, &backgroundMusic);
     soundSystem->playSound(backgroundMusic, nullptr, false, &musicChannel);
     musicChannel->setVolume(volume);
 }
 
-void AudioManager::stopMusic()
-{
+void AudioManager::stopMusic() {
     if (musicChannel) {
         musicChannel->stop();
-        backgroundMusic->release();
-        backgroundMusic = nullptr;
-        musicChannel = nullptr;
     }
 }
 
-void AudioManager::pauseMusic()
-{
+void AudioManager::pauseMusic() {
     if (musicChannel) {
-        bool paused;
-        musicChannel->getPaused(&paused);
-        musicChannel->setPaused(!paused);
+        musicChannel->setPaused(true);
     }
 }
 
-void AudioManager::resumeMusic()
-{
+void AudioManager::resumeMusic() {
     if (musicChannel) {
         musicChannel->setPaused(false);
     }
 }
 
-void AudioManager::setMusicVolume(float volume)
-{
+void AudioManager::setMusicVolume(float volume) {
     if (musicChannel) {
         musicChannel->setVolume(volume);
     }
 }
 
-void AudioManager::loadSound(const std::string& name, const std::string& filePath)
-{
+void AudioManager::loadSound(const std::string& name, const std::string& filePath) {
     FMOD::Sound* sound;
     soundSystem->createSound(filePath.c_str(), FMOD_DEFAULT, nullptr, &sound);
     soundEffects[name] = sound;
 }
 
-void AudioManager::playSound(const std::string& name, float volume)
-{
+void AudioManager::playSound(const std::string& name, float volume) {
     auto it = soundEffects.find(name);
     if (it != soundEffects.end()) {
+        // Crear un nombre único para el canal usando el tiempo actual
+        static int counter = 0;
+        std::string uniqueChannelName = name + "_" + std::to_string(counter++);
+
+        // Crear un nuevo canal
         FMOD::Channel* channel = nullptr;
         soundSystem->playSound(it->second, nullptr, false, &channel);
-        if (channel) {
-            channel->setVolume(volume);
+        channel->setVolume(volume);
+        soundChannels[uniqueChannelName] = channel;
+    }
+}
+
+
+void AudioManager::stopAllSounds() {
+    for (auto& channel : soundChannels) {
+        if (channel.second) {
+            channel.second->stop();
         }
     }
+    soundChannels.clear();
 }
-
-void AudioManager::stopAllSounds()
-{
-    // Obtener el grupo de canales maestro
-    FMOD::ChannelGroup* masterGroup;
-    soundSystem->getMasterChannelGroup(&masterGroup);
-
-    // Detener todos los canales del grupo maestro
-    if (masterGroup) {
-        masterGroup->stop();
-    }
-
-    // También detenemos la música explícitamente
-    stopMusic();
-}
-

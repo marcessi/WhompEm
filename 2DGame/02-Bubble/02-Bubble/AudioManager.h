@@ -12,6 +12,7 @@ public:
 
     void init();
     void release();
+    void update();
 
     void playMusic(const std::string& filePath, bool loop, float volume);
     void stopMusic();
@@ -28,6 +29,7 @@ private:
     FMOD::Sound* backgroundMusic;
     FMOD::Channel* musicChannel;
     std::unordered_map<std::string, FMOD::Sound*> soundEffects;
+    std::unordered_map<std::string, FMOD::Channel*> soundChannels; // Añadido para gestionar los canales de sonido
 };
 
 #endif // AUDIOMANAGER_H
