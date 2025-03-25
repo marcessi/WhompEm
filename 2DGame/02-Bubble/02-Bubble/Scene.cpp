@@ -80,6 +80,7 @@ void Scene::init()
 {
     initShaders();
 	initMenus();
+    initSounds();
     mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
@@ -205,6 +206,10 @@ void Scene::initMenus()
     creditsSprite->setPosition(glm::vec2(0.f, 0.f));
 }
 
+void Scene::initSounds() {
+	audioManager.init();
+}
+
 void Scene::update(int deltaTime)
 {
     // Actualizar según el estado actual del juego
@@ -250,6 +255,7 @@ void Scene::handleMenuInput()
             {
             case OPTION_START_GAME:
                 gameState = GAMEPLAY;
+				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.5f);
                 break;
             case OPTION_INSTRUCTIONS:
                 gameState = MENU_INSTRUCTIONS;
@@ -315,7 +321,10 @@ void Scene::updateGameplay(int deltaTime)
         player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
         followHorizontal = !followHorizontal; // Invertir la dirección de seguimiento
-        if (currentCheckpoint == 5) bossCam = true;
+        if (currentCheckpoint == 5) {
+            bossCam = true;
+			audioManager.playMusic("sounds/boss_music.mp3", true, 0.5f);
+        }
     }
 
     // Ejecutar la animación de desplazamiento a la derecha

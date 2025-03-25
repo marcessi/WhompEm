@@ -7,6 +7,7 @@
 #include "TileMap.h"
 #include "Player.h"
 #include "MovingPlatform.h"
+#include "AudioManager.h"
 
 
 #define SCREEN_WIDTH 1024
@@ -48,6 +49,7 @@ public:
 private:
 	void initShaders();
 	void initMenus();
+	void initSounds();
 	void updateMenu(int deltaTime);
 	void updateGameplay(int deltaTime);
 	void renderMenu();
@@ -55,6 +57,9 @@ private:
 	void handleMenuInput();
 
 private:
+
+	AudioManager audioManager;
+
 	// Estado actual del juego
 	GameState gameState;
 
