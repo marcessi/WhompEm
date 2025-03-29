@@ -160,7 +160,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	sprite->changeAnimation(0);
 	tileMapDispl = tileMapPos;
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1)));
 
 	sprite_lanza->changeAnimation(0);
 	
@@ -329,7 +329,7 @@ void Player::update(int deltaTime)
 					else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
 						sprite_lanza->changeAnimation(STANDS_LEFT);
 					}
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18)));
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
 
 				}
 
@@ -354,7 +354,7 @@ void Player::update(int deltaTime)
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_RIGHT);
 					}
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18)));
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
 
 				}
 
@@ -395,7 +395,7 @@ void Player::update(int deltaTime)
 					sprite_lanza->changeAnimation(STANDS_LEFT);
 				}
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 
 			}
 			else {
@@ -432,7 +432,7 @@ void Player::update(int deltaTime)
 					first_attack = true;
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 			else {
 				if (sprite->animation() != MOVE_RIGHT)
@@ -462,7 +462,7 @@ void Player::update(int deltaTime)
 				}
 
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 			else if (dir == RIGHT) {
 				if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
@@ -475,7 +475,7 @@ void Player::update(int deltaTime)
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 		}
 		else
@@ -521,12 +521,12 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32 + 1)));
 
 					}
 					else {
 						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32 +1 )));
 
 					}
 
@@ -537,12 +537,12 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 
 					}
 					else {
 						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16  + 1)));
 
 					}
 
@@ -631,11 +631,11 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32 + 1)));
 					}
 					else {
 						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32  + 1)));
 					}
 				}
 				else if (Game::instance().getKey(GLFW_KEY_UP)) {
@@ -643,11 +643,11 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 					}
 					else {
 						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 					}
 				}
 				else {
@@ -671,7 +671,8 @@ void Player::update(int deltaTime)
 		spearSoundPlayed = false;
 	}
 
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1)));
+
 }
 
 
@@ -691,10 +692,10 @@ void Player::setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms)
 	mapPlatforms = tileMapPlatforms;
 }
 
-void Player::setPosition(const glm::vec2 &pos)
+void Player::setPosition(const glm::vec2& pos)
 {
 	posPlayer = pos;
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1))); // Añadir +4 aquí también
 }
 
 glm::ivec2 Player::getPosition()
