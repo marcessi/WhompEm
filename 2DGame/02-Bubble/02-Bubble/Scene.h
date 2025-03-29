@@ -61,6 +61,7 @@ private:
 	void renderGameplay();
 	void handleMenuInput();
 	void updateSnakes(int deltaTime);
+	bool checkSpikeCollision();
 
 private:
 
@@ -85,6 +86,7 @@ private:
 	TileMap* mapBackground;
 	TileMap* mapPlatforms;
 	TileMap* mapFrontal;
+	TileMap* mapSpikes;
 	Player* player;
 	std::vector<Snake*> snakes;
 	HUD* hud;

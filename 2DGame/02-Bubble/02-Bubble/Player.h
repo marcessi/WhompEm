@@ -28,6 +28,7 @@ public:
     void setAudioManager(AudioManager* audioManager);
     void setPosition(const glm::vec2& pos);
     bool checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize);
+    bool isInvulnerable() const { return invulnerable; }
 
     glm::ivec2 getPosition();
     void setLeftLimit(float leftLimit);

@@ -279,11 +279,13 @@ void Player::update(int deltaTime)
 		else {
 			player_visible = false;
 		}
+
+		// Durante el hit inicial, mantener visible al jugador
 		if (hitted)
 			player_visible = true;
 
-		// Después de 2 segundos, desactivar la invulnerabilidad
-		if (invulnerableTimer > 2000) { // 2 segundos
+		// Después de 2 segundos (2000 ms), desactivar la invulnerabilidad
+		if (invulnerableTimer >= 2000) { // Exactamente 2 segundos
 			invulnerable = false;
 			sprite->setAlpha(1.0f);
 			player_visible = true; // Asegurarse de que el sprite es visible
@@ -727,10 +729,12 @@ pair<glm::ivec4, int> Player::getplayerLifes() {
 }
 
 void Player::isHitted() {
+	// Solo aplicar daño si el jugador no está en estado invulnerable
 	if (!invulnerable) {
 		hitted = true;
 		invulnerable = true;
 		hitTimer = 0;
+		invulnerableTimer = 0;
 
 		// Iniciar un mini-salto al recibir daño
 		knockbackJumping = true;

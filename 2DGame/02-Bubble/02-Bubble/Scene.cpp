@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 188 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 Scene::Scene()
 {
@@ -58,6 +58,8 @@ Scene::~Scene()
         delete mapPlatforms;
     if (mapFrontal != NULL)
         delete mapFrontal;
+    if (mapSpikes != NULL)
+        delete mapSpikes;
     if (player != NULL)
         delete player;
     if (hud != NULL)
@@ -103,6 +105,7 @@ void Scene::init()
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
 	mapFrontal = TileMap::createTileMap("levels/sacredwoods_frontal.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+    mapSpikes = TileMap::createTileMap("levels/sacredwoods_spikes.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     player = new Player();
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
     player->setAudioManager(&audioManager);
@@ -297,7 +300,7 @@ void Scene::handleMenuInput()
             {
             case OPTION_START_GAME:
                 gameState = GAMEPLAY;
-				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.1f);
+				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
                 break;
             case OPTION_INSTRUCTIONS:
                 gameState = MENU_INSTRUCTIONS;
@@ -342,6 +345,28 @@ void Scene::updateMenu(int deltaTime)
     }
 }
 
+// Añade esta función antes de updateGameplay
+bool Scene::checkSpikeCollision()
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    int hitboxWidth = 16;
+    int hitboxHeight = 32;
+    int hitboxOffsetX = (32 - hitboxWidth) / 2;
+
+    // Obtenemos la posición de los pies del jugador
+    glm::ivec2 feetPos = glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y + hitboxHeight);
+
+    // Para comprobar si hay pinchos debajo, verificamos una línea muy delgada
+    // justo debajo de los pies del jugador
+    glm::ivec2 checkSize = glm::ivec2(hitboxWidth, 1);
+
+    // Usamos una variable temporal para la posición Y que no nos importa actualizar
+    int tempPosY = feetPos.y;
+
+    // Verificamos si hay una colisión con un tile de pinchos
+    return mapSpikes->collisionMoveDown(feetPos, checkSize, &tempPosY);
+}
+
 void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
@@ -351,7 +376,11 @@ void Scene::updateGameplay(int deltaTime)
 
     glm::ivec2 posPlayer = player->getPosition();
 
-    
+    // Comprobar si el jugador está sobre pinchos
+    if (checkSpikeCollision() && !player->isInvulnerable()) {
+        player->isHitted(); // Aplica daño al jugador
+    }
+
     // Actualizar las plataformas m�viles
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
@@ -377,7 +406,7 @@ void Scene::updateGameplay(int deltaTime)
         followHorizontal = !followHorizontal; // Invertir la direcci�n de seguimiento
         if (currentCheckpoint == 5) {
             bossCam = true;
-			audioManager.playMusic("sounds/boss_music.mp3", true, 0.5f);
+			audioManager.playMusic("sounds/boss_music.mp3", true, 0.4f);
         }
     }
 
