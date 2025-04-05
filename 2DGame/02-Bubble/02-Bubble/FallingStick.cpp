@@ -4,7 +4,7 @@
 #include "FallingStick.h"
 #include "Game.h"
 
-#define FALL_SPEED 2.f
+#define FALL_SPEED 3.f
 #define DISAPPEAR_TIME 1000.0f // 1 segundo para desaparecer
 
 // Definir las animaciones para el stick
@@ -68,7 +68,6 @@ void FallingStick::update(int deltaTime)
 {
     sprite->update(deltaTime);
 
-
     switch (currentState)
     {
     case WAITING:
@@ -83,14 +82,37 @@ void FallingStick::update(int deltaTime)
     case FALLING:
         // Actualizar posición vertical (caer)
         position.y += fallSpeed;
+        break;
 
-        // Eliminamos la comprobación de colisiones para que siempre siga cayendo
-        // No hay más código aquí, solo cae sin detenerse
+    case KILLED:
+        // Mini salto lateral seguido de caída
+        killJumpAngle += 6.0f; // Velocidad del salto
+
+        if (killJumpAngle <= 90.0f) {
+            // Primera mitad del arco: subir y moverse lateralmente
+            position.x += killDir * 1.5f;
+            position.y = int(killStartY - 30.0f * sin(3.14159f * killJumpAngle / 180.f));
+        }
+        else {
+            // Segunda mitad: solo caída más rápida que normal
+            position.y += fallSpeed * 1.5f;
+
+            // Continuar con un poco de movimiento lateral pero más lento
+            position.x += killDir * 0.5f;
+        }
+
+        // Reducir ligeramente el alpha para dar efecto visual
+        if (alpha > 0.7f) {
+            alpha = 0.7f;
+        }
+        sprite->setAlpha(alpha);
+
+        // Cuando ya no sea visible (esté fuera de pantalla por abajo), mantenerlo en estado KILLED
+        // La decisión de eliminarlo completamente se tomará en Scene::updateFallingSticks
         break;
 
     case STOPPED:
     case DISAPPEARING:
-        // Estos estados ya no los usamos, pero los mantenemos por compatibilidad
         // Si por alguna razón llega a estos estados, lo cambiamos a FALLING
         currentState = FALLING;
         sprite->changeAnimation(STICK_FALLING);
@@ -100,6 +122,8 @@ void FallingStick::update(int deltaTime)
     // Actualizar la posición del sprite
     sprite->setPosition(glm::vec2(float(tileMapDispl.x + position.x), float(tileMapDispl.y + position.y)));
 }
+
+
 
 void FallingStick::render()
 {
@@ -125,12 +149,14 @@ void FallingStick::startFalling()
     currentState = FALLING;
     sprite->changeAnimation(STICK_FALLING);
     fallSpeed = FALL_SPEED;
+    waitTime = 0.0f;
 }
 
 void FallingStick::stopFalling()
 {
     currentState = STOPPED;
     disappearTimer = 0.0f;
+    waitTime = 0.0f;
 }
 
 bool FallingStick::isDisappearing() const
@@ -185,3 +211,19 @@ void FallingStick::setWaiting(float time)
     sprite->setAlpha(alpha);
     sprite->changeAnimation(STICK_FALLING);
 }
+void FallingStick::killStick(float directionX)
+{
+    if (currentState != KILLED) {
+        currentState = KILLED;
+        killJumpAngle = 0.0f;
+        killStartY = position.y;
+        killDir = directionX; // Dirección basada en la posición relativa al jugador
+        sprite->setAlpha(1.0f); // Asegurar que sea visible durante el mini-salto
+    }
+}
+
+bool FallingStick::isKilled() const
+{
+    return currentState == KILLED;
+}
+

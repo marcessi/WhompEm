@@ -12,7 +12,8 @@ public:
         WAITING,     // Esperando para caer
         FALLING,     // Cayendo
         STOPPED,     // Detenido después de colisión
-        DISAPPEARING // Desvaneciéndose antes de ser eliminado
+        DISAPPEARING, // Desvaneciéndose antes de ser eliminado
+        KILLED
     };
 
     FallingStick();
@@ -34,6 +35,8 @@ public:
     glm::ivec2 getPosition() const;
     glm::ivec2 getSize() const;
     
+    void killStick(float directionX);
+    bool isKilled() const;
     bool collisionWithPlayer(const glm::ivec2 &playerPos, const glm::ivec2 &playerSize) const;
 
 private:
@@ -60,6 +63,12 @@ private:
         STICK_IDLE,   // Esperando
         STICK_FALLING // Cayendo
     };
+
+    // Variables para el mini-salto cuando es bloqueado
+    float killJumpAngle;
+    float killStartY;
+    float killDir; // Dirección del mini-salto (-1 izquierda, 1 derecha)
+
 };
 
 #endif // _FALLING_STICK_INCLUDE

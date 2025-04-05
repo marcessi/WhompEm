@@ -21,6 +21,9 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	audioManager = nullptr;
+	jumpSoundPlayed = false;
+	spearSoundPlayed = false;
 	knockbackAngle = 0;
 	knockbackJumping = false;
 	knockbackDir = 0;
@@ -29,7 +32,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	invulnerable = false;
 	hitTimer = 0;
 	invulnerableTimer = 0;
-	hearts = glm::vec4(4, 4, 4, 4);
+	hearts = glm::vec4(3, 3, 3, 3);
 	ligths = 2;
 	first_attack = false;
 	spear_visible = false;
@@ -157,7 +160,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 	sprite->changeAnimation(0);
 	tileMapDispl = tileMapPos;
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1)));
 
 	sprite_lanza->changeAnimation(0);
 	
@@ -165,9 +168,6 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 
 void Player::update(int deltaTime)
 {
-	
-	
-
     sprite_lanza->update(deltaTime);
     sprite->update(deltaTime);
 
@@ -279,11 +279,13 @@ void Player::update(int deltaTime)
 		else {
 			player_visible = false;
 		}
+
+		// Durante el hit inicial, mantener visible al jugador
 		if (hitted)
 			player_visible = true;
 
-		// Después de 2 segundos, desactivar la invulnerabilidad
-		if (invulnerableTimer > 2000) { // 2 segundos
+		// Después de 2 segundos (2000 ms), desactivar la invulnerabilidad
+		if (invulnerableTimer >= 2000) { // Exactamente 2 segundos
 			invulnerable = false;
 			sprite->setAlpha(1.0f);
 			player_visible = true; // Asegurarse de que el sprite es visible
@@ -329,7 +331,7 @@ void Player::update(int deltaTime)
 					else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
 						sprite_lanza->changeAnimation(STANDS_LEFT);
 					}
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18)));
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
 
 				}
 
@@ -354,7 +356,7 @@ void Player::update(int deltaTime)
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_RIGHT);
 					}
-					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18)));
+					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
 
 				}
 
@@ -395,7 +397,7 @@ void Player::update(int deltaTime)
 					sprite_lanza->changeAnimation(STANDS_LEFT);
 				}
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 
 			}
 			else {
@@ -432,7 +434,7 @@ void Player::update(int deltaTime)
 					first_attack = true;
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 			else {
 				if (sprite->animation() != MOVE_RIGHT)
@@ -462,7 +464,7 @@ void Player::update(int deltaTime)
 				}
 
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 			else if (dir == RIGHT) {
 				if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
@@ -475,7 +477,7 @@ void Player::update(int deltaTime)
 					sprite_lanza->changeAnimation(STANDS_RIGHT);
 				}
 
-				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10)));
+				sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 26), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
 			}
 		}
 		else
@@ -521,12 +523,12 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32 + 1)));
 
 					}
 					else {
 						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32 +1 )));
 
 					}
 
@@ -537,12 +539,12 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 
 					}
 					else {
 						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16  + 1)));
 
 					}
 
@@ -622,6 +624,7 @@ void Player::update(int deltaTime)
 					bJumping = true;
 					jumpAngle = 0;
 					startY = posPlayer.y;
+					audioManager->playSound("jump", 1.0f);
 				}
 			}
 			else {
@@ -630,11 +633,11 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != DOWN) sprite_lanza->changeAnimation(DOWN);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_FALLING_RIGHT) sprite->changeAnimation(ATTACK_FALLING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 13), float(tileMapDispl.y + posPlayer.y + 32 + 1)));
 					}
 					else {
 						if (sprite->animation() != ATTACK_FALLING_LEFT) sprite->changeAnimation(ATTACK_FALLING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 21), float(tileMapDispl.y + posPlayer.y + 32  + 1)));
 					}
 				}
 				else if (Game::instance().getKey(GLFW_KEY_UP)) {
@@ -642,11 +645,11 @@ void Player::update(int deltaTime)
 					if (sprite_lanza->animation() != UP) sprite_lanza->changeAnimation(UP);
 					if (dir == RIGHT) {
 						if (sprite->animation() != ATTACK_JUMPING_RIGHT) sprite->changeAnimation(ATTACK_JUMPING_RIGHT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 10), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 					}
 					else {
 						if (sprite->animation() != ATTACK_JUMPING_LEFT) sprite->changeAnimation(ATTACK_JUMPING_LEFT);
-						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16)));
+						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 16), float(tileMapDispl.y + posPlayer.y - 16 + 1)));
 					}
 				}
 				else {
@@ -659,9 +662,19 @@ void Player::update(int deltaTime)
 		}
 	}
 
+	// Reproducir sonido de lanza
+	if (Game::instance().getKey(GLFW_KEY_X)) {
+		if (!spearSoundPlayed && audioManager) {
+			audioManager->playSound("spear", 0.3f);
+			spearSoundPlayed = true;
+		}
+	}
+	else {
+		spearSoundPlayed = false;
+	}
 
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1)));
 
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
 }
 
 
@@ -681,10 +694,10 @@ void Player::setTileMap(TileMap *tileMapWalls, TileMap* tileMapPlatforms)
 	mapPlatforms = tileMapPlatforms;
 }
 
-void Player::setPosition(const glm::vec2 &pos)
+void Player::setPosition(const glm::vec2& pos)
 {
 	posPlayer = pos;
-	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y)));
+	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1))); // Añadir +4 aquí también
 }
 
 glm::ivec2 Player::getPosition()
@@ -702,6 +715,11 @@ void Player::setMovingPlatforms(const std::vector<MovingPlatform*>* platforms)
 	movingPlatforms = platforms;
 }
 
+void Player::setAudioManager(AudioManager* audioManager)
+{
+	this->audioManager = audioManager;
+}
+
 pair<glm::ivec4, int> Player::getplayerLifes() {
 	 pair< glm::ivec4, int> aux;
 	 aux.first = hearts;
@@ -711,10 +729,12 @@ pair<glm::ivec4, int> Player::getplayerLifes() {
 }
 
 void Player::isHitted() {
+	// Solo aplicar daño si el jugador no está en estado invulnerable
 	if (!invulnerable) {
 		hitted = true;
 		invulnerable = true;
 		hitTimer = 0;
+		invulnerableTimer = 0;
 
 		// Iniciar un mini-salto al recibir daño
 		knockbackJumping = true;
@@ -761,68 +781,266 @@ void Player::isHitted() {
 	}
 }
 
-bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize)  {
+bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize) {
 	// Solo verificar colisión si la lanza está visible
 	if (!spear_visible) {
 		return false;
 	}
 
-	// Determinar la posición y tamaño de la hitbox de la lanza
-	glm::ivec2 spearPos;
-	glm::ivec2 spearSize(48, 16); // Tamaño base de la lanza
+	// Variables para la posición de la punta de la lanza y su tamaño de colisión
+	glm::ivec2 spearTipPos;
+	glm::ivec2 spearTipSize(4, 4); // Hitbox más pequeña para mayor precisión
+	bool validAttackAnimation = false;
 
-	// Ajustar la posición y tamaño según la dirección y tipo de ataque
+	// Obtener el keyframe actual de la animación de la lanza
+	int currentLanzaAnim = sprite_lanza->animation();
+	int currentKeyframe = sprite_lanza->key_frame();
+
+	// Ajustar la posición de la punta según la dirección, tipo de ataque y keyframe actual
 	if (dir == LEFT) {
 		if (sprite->animation() == ATTACK_DOWN_LEFT) {
 			// Lanza apuntando hacia abajo izquierda
-			spearPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 18);
-			spearSize = glm::ivec2(44, 16);
+			if (currentLanzaAnim == THROW_LEFT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					spearTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					break;
+				case 1:
+					spearTipPos = glm::ivec2(posPlayer.x - 30, posPlayer.y + 18);
+					break;
+				case 2:
+					spearTipPos = glm::ivec2(posPlayer.x - 35, posPlayer.y + 18);
+					break;
+				case 3: // Lanza extendida hacia abajo
+					spearTipPos = glm::ivec2(posPlayer.x - 40, posPlayer.y + 18);
+					break;
+				case 4: // Lanza en posición máxima
+					spearTipPos = glm::ivec2(posPlayer.x - 46, posPlayer.y + 18);
+					break;
+				case 5:
+					spearTipPos = glm::ivec2(posPlayer.x - 40, posPlayer.y + 18);
+					break;
+				case 6: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x - 35, posPlayer.y + 18);
+					break;
+				case 7: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x - 30, posPlayer.y + 18);
+					break;
+				case 8: // Retracción final
+					spearTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					break;
+				default:
+					spearTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					break;
+				}
+			}
+			else if (currentLanzaAnim == STANDS_LEFT) {
+				// Lanza en posición sostenida
+				spearTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 26);
+			}
+			validAttackAnimation = true;
 		}
 		else if (sprite->animation() == ATTACK_LEFT || sprite->animation() == ATTACK_LEFT_MOVING) {
 			// Lanza horizontal hacia la izquierda
-			spearPos = glm::ivec2(posPlayer.x - 43, posPlayer.y + 10);
-			spearSize = glm::ivec2(43, 16);
+			if (currentLanzaAnim == THROW_LEFT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					spearTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					break;
+				case 1: // Lanza extendiéndose
+					spearTipPos = glm::ivec2(posPlayer.x - 38, posPlayer.y + 10);
+					break;
+				case 2: // Lanza extendiéndose más
+					spearTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+					break;
+				case 3: // Lanza extendiéndose más
+					spearTipPos = glm::ivec2(posPlayer.x - 50, posPlayer.y + 10);
+					break;
+				case 4: // Lanza en posición máxima
+					spearTipPos = glm::ivec2(posPlayer.x - 56, posPlayer.y + 10);
+					break;
+				case 5: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x - 50, posPlayer.y + 10);
+					break;
+				case 6: // Retracción más
+					spearTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+					break;
+				case 7: // Retracción más
+					spearTipPos = glm::ivec2(posPlayer.x - 38, posPlayer.y + 10);
+					break;
+				case 8: // Retracción final
+					spearTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					break;
+				default:
+					spearTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					break;
+				}
+			}
+			else if (currentLanzaAnim == STANDS_LEFT) {
+				// Lanza en posición sostenida
+				spearTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+			}
+			validAttackAnimation = true;
 		}
 		else if (sprite->animation() == ATTACK_JUMPING_LEFT) {
 			// Lanza apuntando hacia arriba izquierda
-			spearPos = glm::ivec2(posPlayer.x - 16, posPlayer.y - 16);
-			spearSize = glm::ivec2(16, 16);
+			if (currentLanzaAnim == UP) {
+				// Posición fija para la punta de la lanza hacia arriba
+				spearTipPos = glm::ivec2(posPlayer.x - 16, posPlayer.y - 18);
+				validAttackAnimation = true;
+			}
 		}
 		else if (sprite->animation() == ATTACK_FALLING_LEFT) {
 			// Lanza apuntando hacia abajo izquierda en caída
-			spearPos = glm::ivec2(posPlayer.x - 21, posPlayer.y + 32);
-			spearSize = glm::ivec2(21, 16);
+			if (currentLanzaAnim == DOWN) {
+				// Posición fija para la punta de la lanza hacia abajo en caída
+				spearTipPos = glm::ivec2(posPlayer.x - 20, posPlayer.y + 42);
+				validAttackAnimation = true;
+			}
 		}
 	}
 	else { // RIGHT
 		if (sprite->animation() == ATTACK_DOWN_RIGHT) {
 			// Lanza apuntando hacia abajo derecha
-			spearPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
-			spearSize = glm::ivec2(28, 16);
+			if (currentLanzaAnim == THROW_RIGHT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					spearTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				case 1:
+					spearTipPos = glm::ivec2(posPlayer.x + 30, posPlayer.y + 18);
+					break;
+				case 2:
+					spearTipPos = glm::ivec2(posPlayer.x + 35, posPlayer.y + 18);
+					break;
+				case 3: // Lanza extendida hacia abajo
+					spearTipPos = glm::ivec2(posPlayer.x + 40, posPlayer.y + 18);
+					break;
+				case 4: // Lanza en posición máxima
+					spearTipPos = glm::ivec2(posPlayer.x + 46, posPlayer.y + 18);
+					break;
+				case 5:
+					spearTipPos = glm::ivec2(posPlayer.x + 40, posPlayer.y + 18);
+					break;
+				case 6: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x + 35, posPlayer.y + 18);
+					break;
+				case 7: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x + 30, posPlayer.y + 18);
+					break;
+				case 8: // Retracción final
+					spearTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				default:
+					spearTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				}
+			}
+			else if (currentLanzaAnim == STANDS_RIGHT) {
+				// Lanza en posición sostenida
+				spearTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 26);
+			}
+			validAttackAnimation = true;
 		}
 		else if (sprite->animation() == ATTACK_RIGHT || sprite->animation() == ATTACK_RIGHT_MOVING) {
 			// Lanza horizontal hacia la derecha
-			spearPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 10);
-			spearSize = glm::ivec2(42, 16);
+			if (currentLanzaAnim == THROW_RIGHT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					spearTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				case 1: // Lanza extendiéndose
+					spearTipPos = glm::ivec2(posPlayer.x + 38, posPlayer.y + 10);
+					break;
+				case 2: // Lanza extendiéndose más
+					spearTipPos = glm::ivec2(posPlayer.x + 44, posPlayer.y + 10);
+					break;
+				case 3: // Lanza extendiéndose más
+					spearTipPos = glm::ivec2(posPlayer.x + 50, posPlayer.y + 10);
+					break;
+				case 4: // Lanza en posición máxima
+					spearTipPos = glm::ivec2(posPlayer.x + 56, posPlayer.y + 10);
+					break;
+				case 5: // Retracción
+					spearTipPos = glm::ivec2(posPlayer.x + 50, posPlayer.y + 10);
+					break;
+				case 6: // Retracción más
+					spearTipPos = glm::ivec2(posPlayer.x + 44, posPlayer.y + 10);
+					break;
+				case 7: // Retracción más
+					spearTipPos = glm::ivec2(posPlayer.x + 38, posPlayer.y + 10);
+					break;
+				case 8: // Retracción final
+					spearTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				default:
+					spearTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				}
+			}
+			else if (currentLanzaAnim == STANDS_RIGHT) {
+				// Lanza en posición sostenida
+				spearTipPos = glm::ivec2(posPlayer.x + 44, posPlayer.y + 10);
+			}
+			validAttackAnimation = true;
 		}
 		else if (sprite->animation() == ATTACK_JUMPING_RIGHT) {
 			// Lanza apuntando hacia arriba derecha
-			spearPos = glm::ivec2(posPlayer.x + 10, posPlayer.y - 16);
-			spearSize = glm::ivec2(20, 16);
+			if (currentLanzaAnim == UP) {
+				// Posición fija para la punta de la lanza hacia arriba
+				spearTipPos = glm::ivec2(posPlayer.x + 16, posPlayer.y - 18);
+				validAttackAnimation = true;
+			}
 		}
 		else if (sprite->animation() == ATTACK_FALLING_RIGHT) {
 			// Lanza apuntando hacia abajo derecha en caída
-			spearPos = glm::ivec2(posPlayer.x + 13, posPlayer.y + 32);
-			spearSize = glm::ivec2(25, 16);
+			if (currentLanzaAnim == DOWN) {
+				// Posición fija para la punta de la lanza hacia abajo en caída
+				spearTipPos = glm::ivec2(posPlayer.x + 20, posPlayer.y + 42);
+				validAttackAnimation = true;
+			}
 		}
 	}
 
-	// Verificar colisión con el enemigo (AABB collision)
-	bool collisionX = spearPos.x < enemyPos.x + enemySize.x &&
-		spearPos.x + spearSize.x > enemyPos.x;
+	// Si no estamos en una animación de ataque válida, no hay colisión
+	if (!validAttackAnimation) {
+		return false;
+	}
 
-	bool collisionY = spearPos.y < enemyPos.y + enemySize.y &&
-		spearPos.y + spearSize.y > enemyPos.y;
+	// Verificar colisión vertical más precisa
+	bool verticalAlignment = (spearTipPos.y >= enemyPos.y &&
+		spearTipPos.y <= enemyPos.y + enemySize.y);
+
+	if (!verticalAlignment) {
+		return false;  // No hay alineación vertical, no puede haber colisión
+	}
+
+	// Crear cajas de colisión para la punta de la lanza y el enemigo
+	glm::ivec2 spearTipMax(spearTipPos.x + spearTipSize.x, spearTipPos.y + spearTipSize.y);
+	glm::ivec2 enemyMax(enemyPos.x + enemySize.x, enemyPos.y + enemySize.y);
+
+	// Verificar colisión (AABB collision)
+	bool collisionX = spearTipPos.x < enemyMax.x && spearTipMax.x > enemyPos.x;
+	bool collisionY = spearTipPos.y < enemyMax.y && spearTipMax.y > enemyPos.y;
+
+	// Para depuración - activar si necesitas ver información de colisión
+	if (collisionX && collisionY) {
+		std::cout << "Colisión: Anim=" << sprite->animation()
+			<< ", Lanza=" << currentLanzaAnim
+			<< ", KeyFrame=" << currentKeyframe
+			<< ", TipPos=[" << spearTipPos.x << "," << spearTipPos.y << "]" << std::endl;
+	}
 
 	return collisionX && collisionY;
+}
+
+
+
+bool Player::isProtecting() const
+{
+	return sprite->animation() == PROTECT_LEFT || sprite->animation() == PROTECT_RIGHT;
 }

@@ -162,21 +162,32 @@ glm::ivec2 Snake::getPosition()
 
 bool Snake::collisionWithPlayer(const glm::ivec2& playerPos, const glm::ivec2& playerSize) const
 {
-    // Implementar detección de colisión con jugador
-    int snakeWidth = 32;
-    int snakeHeight = 16;
-    int snakeOffsetX = (32 - snakeWidth) / 2;
+    // Usar un tamaño de hitbox más preciso para la serpiente
+    int snakeWidth = 24; // Reducido desde 32
+    int snakeHeight = 12; // Reducido desde 16
 
-    glm::ivec2 snakeBoxPos = glm::ivec2(posSnake.x + snakeOffsetX, posSnake.y);
+    // Ajustar offset para centrar la hitbox en el sprite visual
+    int snakeOffsetX = (32 - snakeWidth) / 2;
+    int snakeOffsetY = 2; // Pequeño ajuste vertical para alinear mejor con el sprite
+
+    glm::ivec2 snakeBoxPos = glm::ivec2(posSnake.x + snakeOffsetX, posSnake.y + snakeOffsetY);
+
+    // Definir la hitbox ajustada para el jugador (solo parte inferior)
+    int playerHitboxWidth = playerSize.x;
+    int playerHitboxHeight = playerSize.y / 2; // Solo considerar la mitad inferior del jugador
+    glm::ivec2 playerHitboxPos = glm::ivec2(playerPos.x, playerPos.y + playerSize.y - playerHitboxHeight);
 
     // Comprobar si los rectángulos se solapan
-    bool collisionX = playerPos.x + playerSize.x >= snakeBoxPos.x && snakeBoxPos.x + snakeWidth >= playerPos.x;
-    bool collisionY = playerPos.y + playerSize.y >= snakeBoxPos.y && snakeBoxPos.y + snakeHeight >= playerPos.y;
+    bool collisionX = playerHitboxPos.x + playerHitboxWidth > snakeBoxPos.x &&
+        snakeBoxPos.x + snakeWidth > playerHitboxPos.x;
+
+    bool collisionY = playerHitboxPos.y + playerHitboxHeight > snakeBoxPos.y &&
+        snakeBoxPos.y + snakeHeight > playerHitboxPos.y;
 
     return collisionX && collisionY;
 }
 
 glm::ivec2 Snake::getSize() const {
-    // Devuelve el tamaño del sprite de la serpiente
-    return glm::ivec2(32, 32); // Ajustar al tamaño real de la serpiente
+    // Devuelve el tamaño real de la hitbox de la serpiente para uso en colisiones
+    return glm::ivec2(24, 12);
 }

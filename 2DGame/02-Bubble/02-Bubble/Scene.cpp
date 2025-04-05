@@ -11,10 +11,12 @@
 #define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
 #define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
-#define NUM_STICKS 5
+#define NUM_STICKS 20
 
-#define STICK_MIN_X 980.0f
-#define STICK_MAX_X 1950.0f
+#define STICK_RANGE1_MIN 1020.0f
+#define STICK_RANGE1_MAX 1500.0f
+#define STICK_RANGE2_MIN 1850.0f
+#define STICK_RANGE2_MAX 2000.0f
 
 
 
@@ -66,6 +68,8 @@ Scene::~Scene()
         delete mapPlatforms;
     if (mapFrontal != NULL)
         delete mapFrontal;
+    if (mapSpikes != NULL)
+        delete mapSpikes;
     if (player != NULL)
         delete player;
     if (hud != NULL)
@@ -111,12 +115,15 @@ void Scene::init()
 {
     initShaders();
 	initMenus();
+    initSounds();
     mapWalls = TileMap::createTileMap("levels/sacredwoods_walls.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapPlatforms = TileMap::createTileMap("levels/sacredwoods_platforms.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     mapBackground = TileMap::createTileMap("levels/sacredwoods_nocollisions.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
 	mapFrontal = TileMap::createTileMap("levels/sacredwoods_frontal.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
+    mapSpikes = TileMap::createTileMap("levels/sacredwoods_spikes.txt", glm::vec2(SCREEN_X, SCREEN_Y), texProgram);
     player = new Player();
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+    player->setAudioManager(&audioManager);
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
     player->setTileMap(mapWalls, mapPlatforms);
 
@@ -127,32 +134,62 @@ void Scene::init()
     pair<glm::ivec4, int> playerLifes = player->getplayerLifes();
     hud->syncWithPlayer(playerLifes.first, playerLifes.second);
 
+    // Crear una serpiente estática para pruebas (justo después de inicializar el jugador)
+    Snake* testSnake = new Snake();
+    testSnake->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, Snake::RIGHT);
+    // Colocar la serpiente a unos 100 píxeles a la derecha del jugador, a la misma altura
+    glm::ivec2 playerPos = player->getPosition();
+    testSnake->setPosition(glm::vec2(playerPos.x + 100, playerPos.y));
+    testSnake->setTileMap(mapWalls, mapPlatforms);
+    // Establecer límites de movimiento muy cercanos para que casi no se mueva
+    testSnake->setMovementLimits(playerPos.x + 95, playerPos.x + 105);
+    snakes.push_back(testSnake);
+
+    hud = new HUD();
+    hud->init(glm::ivec2(2, 2), texProgram);
+
     fallingSticks.clear();
     stickPositionsX.clear();
 
-   
+    float range1Size = STICK_RANGE1_MAX - STICK_RANGE1_MIN;
+    float range2Size = STICK_RANGE2_MAX - STICK_RANGE2_MIN;
+    float totalRangeSize = range1Size + range2Size;
 
-    float interval = (STICK_MAX_X - STICK_MIN_X) / (NUM_STICKS - 1);
-    for (int i = 0; i < NUM_STICKS; ++i) {
-        // Añadir variación aleatoria a cada posición X para que no estén perfectamente espaciados
-        float randomOffset = (rand() % 30) - 15.0f; // Variación de ±15 píxeles
-        float xPos = STICK_MIN_X + i * interval + randomOffset;
-        stickPositionsX.push_back(xPos);
+    int sticksInRange1 = static_cast<int>(NUM_STICKS * (range1Size / totalRangeSize));
+    int sticksInRange2 = NUM_STICKS - sticksInRange1;
+
+    // Generar posiciones X para el primer rango
+    if (sticksInRange1 > 0) {
+        float interval1 = range1Size / (sticksInRange1 - 1);
+        for (int i = 0; i < sticksInRange1; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE1_MIN + i * interval1 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
+    }
+
+    // Generar posiciones X para el segundo rango
+    if (sticksInRange2 > 0) {
+        float interval2 = range2Size / (sticksInRange2 - 1);
+        for (int i = 0; i < sticksInRange2; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE2_MIN + i * interval2 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
     }
 
     // Inicializar los falling sticks con posiciones iniciales aleatorias en Y
-    for (int i = 0; i < NUM_STICKS; ++i) {
+    for (int i = 0; i < stickPositionsX.size(); ++i) {
         FallingStick* stick = new FallingStick();
         stick->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
 
-        // Posición Y inicial aleatoria para distribuir verticalmente
-        // Los colocamos entre -300 y -10 para que entren escalonados
-        float initialY = -300.0f + rand() % 290;
+        // Distribuir verticalmente para que no todos empiecen al mismo tiempo
+        float initialY = -300.0f + rand() % 600; // Más distribución vertical
         stick->setPosition(glm::vec2(stickPositionsX[i], initialY));
         stick->setTileMap(mapWalls, mapPlatforms);
 
-        // Iniciar con espera aleatoria para que no caigan todos a la vez
-        stick->setWaiting(rand() % 1500); // Tiempo aleatorio entre 0 y 1.5 segundos
+        // Iniciar directamente en modo falling (para evitar esperas)
+        stick->startFalling();
 
         fallingSticks.push_back(stick);
     }
@@ -281,9 +318,19 @@ void Scene::initMenus()
     creditsSprite->setPosition(glm::vec2(0.f, 0.f));
 }
 
+void Scene::initSounds() {
+    audioManager.init();
+
+    // Cargar efectos de sonido
+    audioManager.loadSound("jump", "sounds/jump1.mp3");
+    audioManager.loadSound("spear", "sounds/spear.mp3");
+    audioManager.loadSound("menu_move", "sounds/menu_move.mp3");
+    audioManager.loadSound("menu_select", "sounds/menu_select.mp3");
+}
+
 void Scene::update(int deltaTime)
 {
-    // Actualizar seg�n el estado actual del juego
+    audioManager.update();
     switch (gameState)
     {
     case MENU_MAIN:
@@ -311,21 +358,25 @@ void Scene::handleMenuInput()
         {
             currentOption = static_cast<MainMenuOption>((currentOption + 1) % 3); // 3 opciones en total
             keyPressed = true;
+            audioManager.playSound("menu_move", 0.5f);
         }
         else if (Game::instance().getKey(GLFW_KEY_UP))
         {
             currentOption = static_cast<MainMenuOption>((currentOption + 2) % 3); // +2 para dar la vuelta correctamente
             keyPressed = true;
+            audioManager.playSound("menu_move", 0.5f);
         }
 
         // Selecci�n de opci�n
         else if (Game::instance().getKey(GLFW_KEY_ENTER) || Game::instance().getKey(GLFW_KEY_SPACE))
         {
             keyPressed = true;
+            audioManager.playSound("menu_select", 0.6f);
             switch (currentOption)
             {
             case OPTION_START_GAME:
                 gameState = GAMEPLAY;
+				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
                 break;
             case OPTION_INSTRUCTIONS:
                 gameState = MENU_INSTRUCTIONS;
@@ -370,6 +421,28 @@ void Scene::updateMenu(int deltaTime)
     }
 }
 
+// Añade esta función antes de updateGameplay
+bool Scene::checkSpikeCollision()
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    int hitboxWidth = 16;
+    int hitboxHeight = 32;
+    int hitboxOffsetX = (32 - hitboxWidth) / 2;
+
+    // Obtenemos la posición de los pies del jugador
+    glm::ivec2 feetPos = glm::ivec2(posPlayer.x + hitboxOffsetX, posPlayer.y + hitboxHeight);
+
+    // Para comprobar si hay pinchos debajo, verificamos una línea muy delgada
+    // justo debajo de los pies del jugador
+    glm::ivec2 checkSize = glm::ivec2(hitboxWidth, 1);
+
+    // Usamos una variable temporal para la posición Y que no nos importa actualizar
+    int tempPosY = feetPos.y;
+
+    // Verificamos si hay una colisión con un tile de pinchos
+    return mapSpikes->collisionMoveDown(feetPos, checkSize, &tempPosY);
+}
+
 void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
@@ -380,6 +453,12 @@ void Scene::updateGameplay(int deltaTime)
     glm::ivec2 posPlayer = player->getPosition();
 	cout << "Player position: " << posPlayer.x << ", " << posPlayer.y << endl;
     
+
+    // Comprobar si el jugador está sobre pinchos
+    if (checkSpikeCollision() && !player->isInvulnerable()) {
+        player->isHitted(); // Aplica daño al jugador
+    }
+
     // Actualizar las plataformas m�viles
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
@@ -403,7 +482,10 @@ void Scene::updateGameplay(int deltaTime)
         player->setLeftLimit(checkpoints[currentCheckpoint]);
         currentCheckpoint++;
         followHorizontal = !followHorizontal; // Invertir la direcci�n de seguimiento
-        if (currentCheckpoint == 5) bossCam = true;
+        if (currentCheckpoint == 5) {
+            bossCam = true;
+			audioManager.playMusic("sounds/boss_music.mp3", true, 0.4f);
+        }
     }
 
     // Ejecutar la animaci�n de desplazamiento a la derecha
@@ -498,7 +580,7 @@ void Scene::updateSnakes(int deltaTime)
             // Calcular posición de generación (fuera de pantalla pero cerca)
             float spawnX;
             if (snakeDir == Snake::LEFT) {
-                spawnX = camX + CAMERA_WIDTH + 32; // A la derecha de la pantalla
+                spawnX = camX + CAMERA_WIDTH + 32; 
             }
             else {
                 spawnX = camX - 32; // A la izquierda de la pantalla
@@ -699,54 +781,79 @@ void Scene::updateFallingSticks(int deltaTime)
 
         // Comprobar si el stick está dentro del rango visible de la cámara en X (extendido)
         bool isInViewX = (stickX >= camX - 100 && stickX <= camRight + 100);
-
         glm::ivec2 stickPos = stick->getPosition();
 
-        // Si está en el rango horizontal visible de la cámara o ya está cayendo
+        // Comprobar si es un stick que ha sido bloqueado
+        if (stick->isKilled()) {
+            // Actualizar siempre los sticks bloqueados
+            stick->update(deltaTime);
+
+            // Si el stick bloqueado ha salido completamente de la pantalla por abajo,
+            // lo marcamos para eliminación permanente
+            if (stickPos.y > camBottom + 200) {
+                // En lugar de reposicionarlo, lo dejamos en su estado KILLED
+                // pero lo movemos muy lejos para que no interfiera
+                stick->setPosition(glm::vec2(-1000, -1000));
+            }
+
+            continue; // Pasar al siguiente stick
+        }
+
+        // Si está en el rango horizontal visible de la cámara
         if (isInViewX) {
             // Si el stick ha salido completamente por la parte inferior de la pantalla,
-            // reposicionarlo en la parte superior
+            // reposicionarlo en la parte superior y hacerlo caer inmediatamente
             if (stickPos.y > camBottom + 100) {
-                // Reposicionar arriba de la cámara
-                stick->setPosition(glm::vec2(stickX, camY - stick->getSize().y - 20));
+                // Reposicionar arriba de la cámara con un poco de aleatoriedad
+                float randomHeight = rand() % 100; // Variación pequeña
+                stick->setPosition(glm::vec2(stickX, camY - stick->getSize().y - 20 - randomHeight));
 
-                // Iniciar tiempo de espera aleatorio antes de empezar a caer
-                stick->setWaiting(300 + rand() % 1200); // Entre 0.3 y 1.5 segundos
+                // Hacer que caiga inmediatamente (sin esperar)
+                stick->startFalling();
             }
             else {
-                // 
+                // Actualizar el stick normalmente
                 stick->update(deltaTime);
 
                 // Comprobar colisión con el jugador
                 if (stick->collisionWithPlayer(posPlayer, glm::ivec2(16, 32))) {
-                    // Guardar estado actual de vida antes del golpe
-                    pair<glm::ivec4, int> beforeHit = player->getplayerLifes();
+                    // Comprobar si el jugador está en modo protección
+                    if (player->isProtecting()) {
+                        // Calcular dirección del rebote basado en la posición relativa al jugador
+                        float reboteDir = (stickX > posPlayer.x) ? 1.0f : -1.0f;
+                        stick->killStick(reboteDir);
+                    }
+                    else {
+                        // Guardar estado actual de vida antes del golpe
+                        pair<glm::ivec4, int> beforeHit = player->getplayerLifes();
 
-                    // El jugador recibe daño
-                    player->isHitted();
+                        // El jugador recibe daño
+                        player->isHitted();
 
-                    // Obtener nuevo estado de vida después del golpe
-                    pair<glm::ivec4, int> afterHit = player->getplayerLifes();
+                        // Obtener nuevo estado de vida después del golpe
+                        pair<glm::ivec4, int> afterHit = player->getplayerLifes();
 
-                    // Actualizar el HUD solo si las vidas cambiaron
-                    if (beforeHit.first != afterHit.first || beforeHit.second != afterHit.second) {
-                        hud->syncWithPlayer(afterHit.first, afterHit.second);
+                        // Actualizar el HUD solo si las vidas cambiaron
+                        if (beforeHit.first != afterHit.first || beforeHit.second != afterHit.second) {
+                            hud->syncWithPlayer(afterHit.first, afterHit.second);
+                        }
                     }
                 }
             }
         }
         else {
-            // Si el stick no está en el rango visible de la cámara en X,
-            // y aún no ha empezado a caer, prepararlo fuera de la vista
-
-            // Si está muy por debajo de la cámara, reposicionarlo arriba
-            if (stickPos.y > camBottom + 100 || stickPos.y < camY - 300) {
-                stick->setPosition(glm::vec2(stickX, camY - 100 - rand() % 200)); // Posición aleatoria arriba
-                stick->setWaiting(300 + rand() % 1500); // Espera aleatoria
-            }
-            else {
-                // Si no está en pantalla pero está en una posición razonable, dejarlo seguir
+            // Si está fuera de la vista pero cerca verticalmente, seguir actualizando
+            if (stickPos.y > camY - 300 && stickPos.y < camBottom + 300) {
                 stick->update(deltaTime);
+            }
+            // Si está muy por encima o debajo, reposicionarlo aleatoriamente
+            else {
+                // Posición aleatoria arriba de la cámara
+                float randomHeight = 20 + rand() % 280; // Entre 20 y 300 píxeles arriba
+                stick->setPosition(glm::vec2(stickX, camY - randomHeight));
+
+                // Hacer que caiga inmediatamente
+                stick->startFalling(); 
             }
         }
     }

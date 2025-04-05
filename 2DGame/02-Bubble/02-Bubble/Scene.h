@@ -6,11 +6,12 @@
 #include "ShaderProgram.h"
 #include "TileMap.h"
 #include "Player.h"
+#include "MovingPlatform.h"
+#include "AudioManager.h"
 #include "Snake.h"
 #include "FallingStick.h"
 #include "HUD.h"
 #include "MovingPlatform.h" // Nueva inclusi�n
-
 
 
 #define SCREEN_WIDTH 1024
@@ -54,15 +55,20 @@ public:
 private:
 	void initShaders();
 	void initMenus();
+	void initSounds();
 	void updateMenu(int deltaTime);
 	void updateGameplay(int deltaTime);
 	void renderMenu();
 	void renderGameplay();
 	void handleMenuInput();
 	void updateSnakes(int deltaTime);
+	bool checkSpikeCollision();
 	void updateFallingSticks(int deltaTime);
 
 private:
+
+	AudioManager audioManager;
+
 	// Estado actual del juego
 	GameState gameState;
 
@@ -89,6 +95,7 @@ private:
 	TileMap* mapBackground;
 	TileMap* mapPlatforms;
 	TileMap* mapFrontal;
+	TileMap* mapSpikes;
 	Player* player;
 	std::vector<Snake*> snakes;
 	HUD* hud;
