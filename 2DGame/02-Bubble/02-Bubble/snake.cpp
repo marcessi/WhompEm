@@ -163,8 +163,8 @@ glm::ivec2 Snake::getPosition()
 bool Snake::collisionWithPlayer(const glm::ivec2& playerPos, const glm::ivec2& playerSize) const
 {
     // Implementar detección de colisión con jugador
-    int snakeWidth = 28;
-    int snakeHeight = 28;
+    int snakeWidth = 32;
+    int snakeHeight = 16;
     int snakeOffsetX = (32 - snakeWidth) / 2;
 
     glm::ivec2 snakeBoxPos = glm::ivec2(posSnake.x + snakeOffsetX, posSnake.y);

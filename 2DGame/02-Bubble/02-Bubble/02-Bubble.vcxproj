@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimKeyframes.h" />
+    <ClInclude Include="FallingStick.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="MovingPlatform.h" />
     <ClInclude Include="Player.h" />
@@ -25,6 +26,7 @@
     <ClInclude Include="HUD.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FallingStick.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MovingPlatform.cpp" />

@@ -7,6 +7,7 @@
 #include "TileMap.h"
 #include "Player.h"
 #include "Snake.h"
+#include "FallingStick.h"
 #include "HUD.h"
 #include "MovingPlatform.h" // Nueva inclusi�n
 
@@ -59,6 +60,7 @@ private:
 	void renderGameplay();
 	void handleMenuInput();
 	void updateSnakes(int deltaTime);
+	void updateFallingSticks(int deltaTime);
 
 private:
 	// Estado actual del juego
@@ -74,6 +76,13 @@ private:
 	float menuTime;
 	bool keyPressed;
 	int keyPressedTimer;
+
+	std::vector<FallingStick*> fallingSticks;
+	std::vector<float> stickPositionsX; // Posiciones X fijas para los palos
+	const float STICK_MIN_X = 980.0f;   // Límite inferior del área de palos
+	const float STICK_MAX_X = 1950.0f;  // Límite superior del área de palos
+	const int NUM_STICKS = 5;           // Número total de palos
+	
 
 	// Variables del juego
 	TileMap* mapWalls;
