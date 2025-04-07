@@ -4,60 +4,88 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "Sprite.h"
-#include "ShaderProgram.h"
 #include "Texture.h"
+#include "ShaderProgram.h"
 
-class HUD
-{
+class HUD {
 public:
-    // Constructor y destructor
     HUD();
     ~HUD();
 
-    // Inicialización
-    void init(const glm::ivec2 &screenPos, ShaderProgram &shaderProgram);
-    
-    // Actualización y renderizado
+    void init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram);
     void update(int deltaTime);
     void render();
+    void updatePosition(float cameraX, float cameraY);
 
-    // Configuración de estado
-    void setHealth(const glm::ivec4& newHearts);
+    // Métodos para actualizar el estado del HUD
+    void setHealth(std::vector<int>& newHearts);
     void setLights(int newLights);
-    void syncWithPlayer(const glm::ivec4& playerHearts, int playerLights);
+    void syncWithPlayer(const std::vector<int>& playerHearts, int playerLights);
+
+    // Nuevos métodos para power-ups
+    void collectSmallHeart();
+    void collectLargeHeart();
+    void collectGourd();
+    void updatePowerUpIcons(int flintSpearHits, int buffaloHelmetHits, bool hasDeerskinShirt);
+
+
+    // Métodos de acceso
     bool isGameOver() const;
+    int getGourdsCount() const;
+    int getMaxHearts() const;
 
-
-	void updatePosition(float cameraX, float cameraY);
+	void collectPotion();
 
 private:
-    // Posición de la HUD en pantalla
-    glm::ivec2 screenPos;
+    // Enumeraciones para las animaciones
+    enum HeartAnim { FULL_HEART, CASI_FULL, CASI_EMPTY, EMPTY_HEART };
+    enum WeaponAnim { WEAPON_ACTIVE };
+    enum LightAnim { LIGHT_ON };
+
+    // Métodos de actualización interna
     void updateHeartAnimations();
-    void updateLightAnimations();
-    // Datos del juego
-    glm::ivec4 heartsLogic;  // 4 corazones con niveles 0-4
-    int lights;        // Número de luces actuales
-    int maxLights;     // Número máximo de luces
-    bool gameover;
-    bool hasWeapon;
+    void updateGourdCounter();
 
-    // Texturas y sprites
-    Texture spritesheet_hearts;
+    // Posición en pantalla
+    glm::ivec2 screenPos;
+
+    // Sprites para el HUD
     std::vector<Sprite*> hearts;
-
-    Texture spritesheet_lights;
     std::vector<Sprite*> lightsIcons;
-
-    Texture spritesheet_weapon;
     Sprite* weaponIcon;
+    Sprite* gourdCounter;
+    std::vector<Sprite*> gourdDigits;
 
-    // Animaciones para los elementos de la HUD
-    enum HeartAnimations {
-		CASI_FULL, CASI_EMPTY, FULL_HEART, EMPTY_HEART
-    };
-    enum LightAnimations { LIGHT_ON };
-    enum WeaponAnimations { WEAPON_ACTIVE };
+    // Texturas
+    Texture spritesheet_hearts;
+    Texture spritesheet_weapon;
+    Texture spritesheet_lights;
+    Texture spritesheet_gourds;
+    Texture spritesheet_numbers;
+
+    // Estado lógico
+    std::vector<int> heartsLogic;
+    int lights;
+    int maxLights;
+    int maxHearts;  // Número máximo de corazones disponibles (inicialmente 4)
+    int gourdCount; // Contador de calabazas recolectadas
+    std::vector<int> gourdThresholds; // Umbrales para desbloquear corazones
+
+    // Estados
+    bool hasWeapon;
+    bool gameover;
+
+    Sprite* flintSpearIcon;
+    Sprite* buffaloHelmetIcon;
+    Sprite* deerskinShirtIcon;
+
+    // Texturas
+    Texture spritesheet_powerups;
+
+    // Estado
+    int flintSpearHits;
+    int buffaloHelmetHits;
+    bool hasDeerskinShirt;
 };
 
 #endif // _HUD_INCLUDE

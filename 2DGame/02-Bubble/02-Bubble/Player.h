@@ -34,9 +34,25 @@ public:
     void setLeftLimit(float leftLimit);
     bool isJumping() const { return bJumping; }
     void isHitted();
-    pair<glm::ivec4, int> getplayerLifes();
+    pair<std::vector<int>, int> getplayerLifes();
     bool isProtecting() const;
+   
 
+    // Nuevos métodos para powerups
+    void collectSmallHeart();
+    void collectLargeHeart();
+    void collectGourd();
+    int getGourds() const { return gourds; }
+    int getMaxHearts() const { return maxHearts; }
+    void increaseMaxHearts();
+    void collectPotion();
+    void collectFlintSpear();
+    void collectBuffaloHelmet();
+    void collectDeerskinShirt();
+
+    int getFlintSpearHits() const;
+    int getBuffaloHelmetHits() const;
+    bool hasDeerskinShirt() const;
 
 private:
     bool bJumping;
@@ -55,11 +71,11 @@ private:
     bool hitted;
     int ligths;
     bool gameover;
-    glm::ivec4 hearts;
-	bool invulnerable;
-	int hitTimer;
-	int invulnerableTimer;
-	bool player_visible;
+    std::vector<int> hearts;
+    bool invulnerable;
+    int hitTimer;
+    int invulnerableTimer;
+    bool player_visible;
 
     // Variables para el salto al recibir daño
     bool knockbackJumping;
@@ -71,7 +87,14 @@ private:
     bool jumpSoundPlayed;
     bool spearSoundPlayed;
 
-
+    // Nuevas variables para el sistema de power-ups
+    int gourds;
+    int maxHearts;
+    std::vector<int> gourdThresholds;
+    int flintSpearHits;       // Número de golpes restantes con flint spear (máx. 4)
+    int buffaloHelmetHits;    // Número de golpes restantes con buffalo helmet (máx. 4)
+    bool deerskinShirtActive; // Si el deerskin shirt está activo
+    float deerskinTimer;
 };
 
 #endif // _PLAYER_INCLUDE

@@ -107,7 +107,18 @@ Scene::~Scene()
 		delete stick;
 	}
 	fallingSticks.clear();
-    
+
+    for (auto orco : orcos) {
+        delete orco;
+    }
+    orcos.clear();
+    spawnPointToOrco.clear();
+
+    for (auto powerUp : powerUps) {
+        delete powerUp;
+    }
+    powerUps.clear();
+
 	movingPlatforms.clear();
 }
 
@@ -131,25 +142,23 @@ void Scene::init()
     hud->init(glm::ivec2(2, 2), texProgram);
     
 
-    pair<glm::ivec4, int> playerLifes = player->getplayerLifes();
+    pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
     hud->syncWithPlayer(playerLifes.first, playerLifes.second);
 
-    // Crear una serpiente estática para pruebas (justo después de inicializar el jugador)
-    Snake* testSnake = new Snake();
-    testSnake->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, Snake::RIGHT);
-    // Colocar la serpiente a unos 100 píxeles a la derecha del jugador, a la misma altura
-    glm::ivec2 playerPos = player->getPosition();
-    testSnake->setPosition(glm::vec2(playerPos.x + 100, playerPos.y));
-    testSnake->setTileMap(mapWalls, mapPlatforms);
-    // Establecer límites de movimiento muy cercanos para que casi no se mueva
-    testSnake->setMovementLimits(playerPos.x + 95, playerPos.x + 105);
-    snakes.push_back(testSnake);
 
     hud = new HUD();
     hud->init(glm::ivec2(2, 2), texProgram);
 
     fallingSticks.clear();
     stickPositionsX.clear();
+
+    orcoSpawnPositionsX = { 275.0f, 475.0f, 750.0f };
+    orcos.clear();
+    spawnPointToOrco.clear();
+    // En Scene::init()
+    orcoSpawnStates.clear();
+    orcoSpawnStates.resize(orcoSpawnPositionsX.size(), SPAWN_AVAILABLE);
+
 
     float range1Size = STICK_RANGE1_MAX - STICK_RANGE1_MIN;
     float range2Size = STICK_RANGE2_MAX - STICK_RANGE2_MIN;
@@ -239,6 +248,7 @@ void Scene::init()
     player->setMovingPlatforms(&movingPlatforms);
     projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
     currentTime = 0.0f;
+
 }
 
 void Scene::initShaders()
@@ -446,9 +456,9 @@ bool Scene::checkSpikeCollision()
 void Scene::updateGameplay(int deltaTime)
 {
     currentTime += deltaTime;
-    pair<glm::ivec4, int> prevLifeState = player->getplayerLifes();
+    pair<std::vector<int>, int> prevLifeState = player->getplayerLifes();
     player->update(deltaTime);
-    pair<glm::ivec4, int> currentLifeState = player->getplayerLifes();
+    pair<std::vector<int>, int> currentLifeState = player->getplayerLifes();
 
     glm::ivec2 posPlayer = player->getPosition();
 	cout << "Player position: " << posPlayer.x << ", " << posPlayer.y << endl;
@@ -466,12 +476,17 @@ void Scene::updateGameplay(int deltaTime)
 
     updateSnakes(deltaTime);
     updateFallingSticks(deltaTime);
-    
+    updateOrcos(deltaTime);
+    updatePowerUps(deltaTime);
 
     // Si el jugador recibió daño, actualizar el HUD inmediatamente
         hud->syncWithPlayer(currentLifeState.first, currentLifeState.second);
     
-
+        hud->updatePowerUpIcons(
+            player->getFlintSpearHits(),
+            player->getBuffaloHelmetHits(),
+            player->hasDeerskinShirt()
+        );
     // Verificar si el jugador ha alcanzado el punto de control actual
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
     {
@@ -554,6 +569,257 @@ void Scene::updateGameplay(int deltaTime)
 
     hud->update(deltaTime);
 }
+void Scene::updateOrcos(int deltaTime)
+{
+    // Calcular los límites de la cámara
+    glm::ivec2 posPlayer = player->getPosition();
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+    float camRight = camX + CAMERA_WIDTH;
+    float camBottom = camY + CAMERA_HEIGHT;
+
+    // Actualizar estado de los puntos de spawn basado en visibilidad
+    for (int i = 0; i < orcoSpawnPositionsX.size(); ++i) {
+        float spawnX = orcoSpawnPositionsX[i];
+        bool isSpawnVisible = (spawnX >= camX && spawnX <= camRight);
+
+        // Si el punto es visible
+        if (isSpawnVisible) {
+            // Si el punto estaba fuera de pantalla y ahora es visible de nuevo
+            if (orcoSpawnStates[i] == SPAWN_LEFT_SCREEN) {
+                // Verificar si hay un orco asociado a este punto
+                auto it = spawnPointToOrco.find(i);
+
+                // Si no hay orco asociado o el orco ya no existe/está muerto
+                if (it == spawnPointToOrco.end() || it->second == nullptr || !it->second->isAlive() || orcoSpawnStates[i] == SPAWN_DEAD) {
+                    orcoSpawnStates[i] = SPAWN_AVAILABLE; // Punto disponible para nuevo orco
+                    spawnPointToOrco.erase(i); // Eliminar la referencia al orco anterior
+                    std::cout << "Punto " << i << " disponible para spawn" << std::endl;
+                }
+                else {
+                    // Si el orco sigue existiendo, mantener como activo
+                    orcoSpawnStates[i] = SPAWN_ACTIVE;
+                }
+            }
+
+            // Si el punto está disponible, generar un nuevo orco
+            if (orcoSpawnStates[i] == SPAWN_AVAILABLE) {
+                // Verificar que no haya un orco ya asociado a este punto
+                if (spawnPointToOrco.find(i) == spawnPointToOrco.end()) {
+                    // Crear nuevo orco
+                    Orco* newOrco = new Orco();
+
+                    // Determinar dirección inicial según la posición del jugador
+                    Orco::Direction dir = (posPlayer.x < spawnX) ? Orco::LEFT : Orco::RIGHT;
+                    newOrco->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, dir);
+
+                    // Posicionar orco
+                    newOrco->setPosition(glm::vec2(spawnX, camY - 32));
+
+                    // Configuraciones
+                    newOrco->setTileMap(mapWalls, mapPlatforms);
+                    newOrco->setMovingPlatforms(&movingPlatforms);
+                    newOrco->setPlayerPosition(&posPlayer);
+
+                    // Configurar callback para daño al jugador
+                    newOrco->setPlayerHitCallback([this]() {
+                        if (!player->isInvulnerable()) {
+                            player->isHitted();
+                        }
+                        });
+
+                    // Asociar orco al punto de spawn en el mapa
+                    spawnPointToOrco[i] = newOrco;
+                    orcos.push_back(newOrco);
+                    orcoSpawnStates[i] = SPAWN_ACTIVE;
+
+                    std::cout << "Orco generado en punto " << i << " (X=" << spawnX << ")" << std::endl;
+                }
+            }
+        }
+        else { // Si el punto no es visible
+                orcoSpawnStates[i] = SPAWN_LEFT_SCREEN;
+                std::cout << "Punto " << i << " ha salido de la pantalla" << std::endl;
+            
+        }
+    }
+
+    // Actualizar todos los orcos existentes
+    for (size_t i = 0; i < orcos.size(); ++i) {
+        Orco* orco = orcos[i];
+
+        // Actualizar orco
+        orco->update(deltaTime);
+        orco->setPlayerPosition(&posPlayer);
+
+        glm::ivec2 orcoPos = orco->getPosition();
+        glm::ivec2 orcoSize = orco->getSize();
+
+        // Verificar colisión con la lanza del jugador
+        if (player->checkSpearCollision(orcoPos, orcoSize)) {
+            orco->hit();
+        }
+
+        // Verificar si el orco está dentro del rango visible
+        bool isOrcoVisible = (orcoPos.x + orcoSize.x >= camX - 100 &&
+            orcoPos.x <= camRight + 100 &&
+            orcoPos.y + orcoSize.y >= camY - 200 &&
+            orcoPos.y <= camBottom + 200);
+
+        if (!orco->isAlive()) {
+            
+            // Generar power-up con probabilidad
+            int randomVal = rand() % 100;
+            if (randomVal < 100) { // 40% de probabilidad total
+                PowerUpType type;
+				type = FLINT_SPEAR; // Cambia esto para el tipo de power-up deseado
+                // Generar el power-up en la posición del orco
+                spawnPowerUp(glm::vec2(orcoPos.x, orcoPos.y + 16), type);
+            }
+        }
+
+        // Si el orco está muerto o fuera de pantalla, eliminarlo
+        if (!orco->isAlive() || !isOrcoVisible) {
+            // Buscar el punto de spawn asociado
+            for (auto it = spawnPointToOrco.begin(); it != spawnPointToOrco.end(); ++it) {
+                if (it->second == orco) {
+                    int spawnIndex = it->first;
+
+                    // Si el orco murió, marcar punto como muerto
+                    if (!orco->isAlive()) {
+                        orcoSpawnStates[spawnIndex] = SPAWN_DEAD;
+                        std::cout << "Orco muerto en punto " << spawnIndex << std::endl;
+                    }
+
+                    // Eliminar la referencia al orco en el mapa
+                    // pero no del vector aún (se hará más abajo)
+                    it->second = nullptr;
+                    break;
+                }
+            }
+
+            // Eliminar el orco
+            delete orco;
+            orcos.erase(orcos.begin() + i);
+            --i; // Ajustar índice
+        }
+    }
+
+    // Limpiar referencias a orcos nulos en el mapa
+    for (auto it = spawnPointToOrco.begin(); it != spawnPointToOrco.end();) {
+        if (it->second == nullptr) {
+            it = spawnPointToOrco.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+	
+}
+
+
+
+void Scene::updatePowerUps(int deltaTime)
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    glm::ivec2 playerSize(16, 32); // Tamaño del hitbox del jugador
+
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+    float camRight = camX + CAMERA_WIDTH;
+    float camBottom = camY + CAMERA_HEIGHT;
+
+    // Actualizar cada power-up
+    for (int  i = 0; i < powerUps.size(); ++i) {
+        PowerUp* powerUp = powerUps[i];
+
+        glm::ivec2 powerUpPos = powerUp->getPosition();
+        glm::ivec2 powerUpSize = powerUp->getSize();
+
+        // Comprobar si está fuera de pantalla
+        bool isVisible = (powerUpPos.x + powerUpSize.x >= camX &&
+            powerUpPos.x <= camRight &&
+            powerUpPos.y + powerUpSize.y >= camY &&
+            powerUpPos.y <= camBottom);
+
+        // Si no es visible, desactivarlo
+        if (!isVisible) {
+            // Solo desactivamos los corazones pequeños fuera de pantalla
+            // ya que suben y pueden salir rápidamente
+            powerUp->deactivate();
+        }
+
+        // Actualizar el power-up
+        powerUp->update(deltaTime);
+
+        // Comprobar colisión con el jugador
+        if (powerUp->isActive() && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
+            // Aplicar el efecto del power-up según su tipo
+            switch (powerUp->getType()) {
+            case SMALL_HEART:
+                player->collectSmallHeart();
+                break;
+            case LARGE_HEART:
+                player->collectLargeHeart();
+                break;
+            case GOURD:
+                player->collectGourd();
+				hud->collectGourd();
+                break;
+			case MAGIC_POTION:
+				player->collectPotion();
+				hud->collectPotion();
+				break;
+            case FLINT_SPEAR:
+                player->collectFlintSpear();
+                break;
+            case BUFFALO_HELMET:
+                player->collectBuffaloHelmet();
+                break;
+            case DEERSKIN_SHIRT:
+                player->collectDeerskinShirt();
+                break;
+            }
+
+            // Desactivar el power-up recogido
+            powerUp->deactivate();
+
+            // Actualizar el HUD con el nuevo estado del jugador
+            pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
+            hud->syncWithPlayer(playerLifes.first, playerLifes.second);
+			
+            hud->updatePowerUpIcons(
+                player->getFlintSpearHits(),
+                player->getBuffaloHelmetHits(),
+                player->hasDeerskinShirt()
+            );
+        }
+
+        // Eliminar power-ups desactivados
+        if (!powerUp->isActive()) {
+            delete powerUp;
+            powerUps.erase(powerUps.begin() + i);
+            --i; // Ajustar el índice
+        }
+    }
+}
+
+// Añadir función spawnPowerUp
+void Scene::spawnPowerUp(const glm::vec2& position, PowerUpType type)
+{
+    PowerUp* powerUp = new PowerUp(type);
+    powerUp->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+    if (type == SMALL_HEART) {
+        powerUp->setFloatingType(true, true); // Flota hacia arriba
+    }
+    else {
+        powerUp->setFloatingType(true, false); // Flota en el sitio
+    }
+    powerUp->setPosition(position);
+    powerUp->setTileMap(mapWalls, mapPlatforms);
+    powerUps.push_back(powerUp);
+}
+
 
 void Scene::updateSnakes(int deltaTime)
 {
@@ -708,6 +974,15 @@ void Scene::renderGameplay()
         snake->render();
     }
 
+    for (auto orco : orcos) {
+        orco->render();
+    }
+
+    for (auto powerUp : powerUps) {
+        powerUp->render();
+    }
+
+
     glm::ivec2 posPlayer = player->getPosition();
     float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
     float camRight = camX + CAMERA_WIDTH;
@@ -747,7 +1022,7 @@ float Scene::getCameraLimit()
     return cameraLimits[currentCheckpoint].first;
 }
 
-void Scene::setPlayerHealth(const glm::ivec4& health)
+void Scene::setPlayerHealth( std::vector<int>& health)
 {
     if (hud != nullptr)
         hud->setHealth(health);
@@ -825,13 +1100,13 @@ void Scene::updateFallingSticks(int deltaTime)
                     }
                     else {
                         // Guardar estado actual de vida antes del golpe
-                        pair<glm::ivec4, int> beforeHit = player->getplayerLifes();
+                        pair<std::vector<int>, int> beforeHit = player->getplayerLifes();
 
                         // El jugador recibe daño
                         player->isHitted();
 
                         // Obtener nuevo estado de vida después del golpe
-                        pair<glm::ivec4, int> afterHit = player->getplayerLifes();
+                        pair<std::vector<int>, int> afterHit = player->getplayerLifes();
 
                         // Actualizar el HUD solo si las vidas cambiaron
                         if (beforeHit.first != afterHit.first || beforeHit.second != afterHit.second) {

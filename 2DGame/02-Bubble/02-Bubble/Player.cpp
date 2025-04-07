@@ -21,6 +21,18 @@ enum LanzaActions {
 
 void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 {
+	gourds = 0;
+	maxHearts = 4; // Inicialmente solo 4 corazones disponibles
+	hearts.clear();
+	for (int i = 0; i < maxHearts; ++i) {
+		hearts.push_back(3); // Todos los corazones comienzan llenos (valor 3)
+	}
+	// Inicializar los umbrales para nuevos corazones
+	gourdThresholds = { 9, 12, 16, 22, 30, 42, 62, 99 };
+	flintSpearHits = 0;
+	buffaloHelmetHits = 0;
+	deerskinShirtActive = false;
+	deerskinTimer = 0.0f;
 	audioManager = nullptr;
 	jumpSoundPlayed = false;
 	spearSoundPlayed = false;
@@ -32,7 +44,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	invulnerable = false;
 	hitTimer = 0;
 	invulnerableTimer = 0;
-	hearts = glm::vec4(3, 3, 3, 3);
+	
 	ligths = 2;
 	first_attack = false;
 	spear_visible = false;
@@ -170,6 +182,20 @@ void Player::update(int deltaTime)
 {
     sprite_lanza->update(deltaTime);
     sprite->update(deltaTime);
+	static bool canJumpAgain = true;
+
+	if (deerskinShirtActive) {
+		deerskinTimer += deltaTime;
+
+		// Después de 5 segundos (5000 ms), desactivar la invencibilidad
+		if (deerskinTimer >= 5000.0f) {
+			deerskinShirtActive = false;
+			deerskinTimer = 0.0f;
+			invulnerable = false;
+			sprite->setAlpha(1.0f);
+			player_visible = true;
+		}
+	}
 
 	if (hitted) {
 		hitTimer += deltaTime;
@@ -499,6 +525,10 @@ void Player::update(int deltaTime)
 			}
 		}
 
+		if (!Game::instance().getKey(GLFW_KEY_Z)) {
+			canJumpAgain = true;
+		}
+
 		if (bJumping)
 		{
 			jumpAngle += JUMP_ANGLE_STEP;
@@ -550,10 +580,53 @@ void Player::update(int deltaTime)
 
 				}
 				else {
-					if (dir == LEFT)
-						sprite->changeAnimation(JUMP_LEFT);
-					else
-						sprite->changeAnimation(JUMP_RIGHT);
+					if (dir == LEFT) {
+						if (Game::instance().getKey(GLFW_KEY_X)) {
+							if (sprite->animation() != ATTACK_DOWN_LEFT)sprite->changeAnimation(ATTACK_DOWN_LEFT);
+							spear_visible = true;
+
+							if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+								sprite_lanza->changeAnimation(THROW_LEFT);
+							}
+							else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_LEFT);
+							}
+							else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+								sprite_lanza->changeAnimation(STANDS_LEFT);
+							}
+							sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
+
+						}
+
+						else
+							sprite->changeAnimation(JUMP_LEFT);
+					}
+					else if (dir == RIGHT) {
+						if (Game::instance().getKey(GLFW_KEY_X)) {
+							if (sprite->animation() != ATTACK_DOWN_RIGHT) sprite->changeAnimation(ATTACK_DOWN_RIGHT);
+							spear_visible = true;
+
+							if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+
+								sprite_lanza->changeAnimation(THROW_RIGHT);
+							}
+							else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_RIGHT);
+							}
+							else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_RIGHT);
+							}
+							sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
+
+						}
+
+						else
+							sprite->changeAnimation(JUMP_RIGHT);
+					}
 				}
 
 				if (jumpAngle > 90) {
@@ -619,9 +692,11 @@ void Player::update(int deltaTime)
 			// Comprobar colisiones con el suelo
 			if (collisionWithWalls || collisionWithPlatforms || collisionWithMovingPlatforms)
 			{
-				if (Game::instance().getKey(GLFW_KEY_Z))
+
+				if (Game::instance().getKey(GLFW_KEY_Z) && canJumpAgain)
 				{
 					bJumping = true;
+					canJumpAgain = false;
 					jumpAngle = 0;
 					startY = posPlayer.y;
 					audioManager->playSound("jump", 1.0f);
@@ -653,10 +728,53 @@ void Player::update(int deltaTime)
 					}
 				}
 				else {
-					if (dir == LEFT)
-						if (sprite->animation() != JUMP_LEFT) sprite->changeAnimation(JUMP_LEFT);
+					if (dir == LEFT) {
+						if (Game::instance().getKey(GLFW_KEY_X)) {
+							if (sprite->animation() != ATTACK_DOWN_LEFT)sprite->changeAnimation(ATTACK_DOWN_LEFT);
+							spear_visible = true;
+
+							if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
+								sprite_lanza->changeAnimation(THROW_LEFT);
+							}
+							else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_LEFT);
+							}
+							else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+								sprite_lanza->changeAnimation(STANDS_LEFT);
+							}
+							sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
+
+						}
+
 						else
-							if (sprite->animation() != JUMP_RIGHT) sprite->changeAnimation(JUMP_RIGHT);
+							sprite->changeAnimation(JUMP_LEFT);
+					}
+					else if (dir == RIGHT) {
+						if (Game::instance().getKey(GLFW_KEY_X)) {
+							if (sprite->animation() != ATTACK_DOWN_RIGHT) sprite->changeAnimation(ATTACK_DOWN_RIGHT);
+							spear_visible = true;
+
+							if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
+
+								sprite_lanza->changeAnimation(THROW_RIGHT);
+							}
+							else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_RIGHT);
+							}
+							else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+								first_attack = true;
+								sprite_lanza->changeAnimation(STANDS_RIGHT);
+							}
+							sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x + 28), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
+
+						}
+
+						else
+							sprite->changeAnimation(JUMP_RIGHT);
+					}
 				}
 			}
 		}
@@ -720,8 +838,8 @@ void Player::setAudioManager(AudioManager* audioManager)
 	this->audioManager = audioManager;
 }
 
-pair<glm::ivec4, int> Player::getplayerLifes() {
-	 pair< glm::ivec4, int> aux;
+pair<std::vector<int>, int> Player::getplayerLifes() {
+	 pair< std::vector<int>, int> aux;
 	 aux.first = hearts;
 	 aux.second = ligths;
 	 return aux;
@@ -729,6 +847,9 @@ pair<glm::ivec4, int> Player::getplayerLifes() {
 }
 
 void Player::isHitted() {
+	if (deerskinShirtActive) {
+		return;
+	}
 	// Solo aplicar daño si el jugador no está en estado invulnerable
 	if (!invulnerable) {
 		hitted = true;
@@ -757,25 +878,36 @@ void Player::isHitted() {
 			// Si no se pulsa ninguna o se pulsan ambas, salto vertical
 			knockbackDir = 0;
 		}
+		// Si tiene Buffalo Helmet, reducir contador pero no perder vida
+		if (buffaloHelmetHits > 0) {
+			buffaloHelmetHits--;
+			return; // No perder vida
+		}
 
-		// Restar vidas
-		if (hearts.w > 0) {
-			hearts.w--;
+		bool heartDamaged = false;
+
+		// Buscar el primer corazón que tenga vida y restarle
+		for (int i = hearts.size() - 1; i >= 0; --i) {
+			if (hearts[i] > 0) {
+				hearts[i]--;
+				heartDamaged = true;
+				break;
+			}
 		}
-		else if (hearts.z > 0) {
-			hearts.z--;
-		}
-		else if (hearts.y > 0) {
-			hearts.y--;
-		}
-		else if (hearts.x > 0) {
-			hearts.x--;
-		}
-		else {
+
+		// Si no había corazones con vida, perder una luz
+		if (!heartDamaged) {
 			ligths--;
-			hearts = glm::ivec4(4, 4, 4, 4);
-			if (ligths == 0) {
+
+			if (ligths <= 0) {
 				gameover = true;
+			}
+			else {
+				// Restaurar todos los corazones
+				hearts.clear();
+				for (int i = 0; i < maxHearts; ++i) {
+					hearts.push_back(3);
+				}
 			}
 		}
 	}
@@ -1027,12 +1159,11 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 	bool collisionX = spearTipPos.x < enemyMax.x && spearTipMax.x > enemyPos.x;
 	bool collisionY = spearTipPos.y < enemyMax.y && spearTipMax.y > enemyPos.y;
 
-	// Para depuración - activar si necesitas ver información de colisión
-	if (collisionX && collisionY) {
-		std::cout << "Colisión: Anim=" << sprite->animation()
-			<< ", Lanza=" << currentLanzaAnim
-			<< ", KeyFrame=" << currentKeyframe
-			<< ", TipPos=[" << spearTipPos.x << "," << spearTipPos.y << "]" << std::endl;
+	bool collision = collisionX && collisionY;
+
+	// Si hay colisión y tiene Flint Spear, reducir contador
+	if (collision && flintSpearHits > 0) {
+		flintSpearHits--;
 	}
 
 	return collisionX && collisionY;
@@ -1043,4 +1174,91 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 bool Player::isProtecting() const
 {
 	return sprite->animation() == PROTECT_LEFT || sprite->animation() == PROTECT_RIGHT;
+}
+
+void Player::collectSmallHeart() {
+	// Buscar el primer corazón que no esté lleno
+	for (int i = 0; i < hearts.size(); ++i) {
+		if (hearts[i] < 3) {
+			hearts[i]++;
+
+			return;
+		}
+	}
+}
+
+// Modificar collectLargeHeart para usar el vector hearts
+void Player::collectLargeHeart() {
+	// Restaurar todos los corazones disponibles
+	for (int i = 0; i < hearts.size(); ++i) {
+		hearts[i] = 3;
+	}
+
+
+}
+
+// Modificar increaseMaxHearts para usar el vector hearts
+void Player::increaseMaxHearts() {
+	if (maxHearts < 12) {
+		maxHearts++;
+
+		// Añadir un nuevo corazón al vector
+		hearts.push_back(3); // Corazón lleno
+
+
+	}
+}
+
+void Player::collectGourd()
+{
+
+	gourds++;
+
+	// Comprobar si hemos alcanzado un umbral para obtener un nuevo corazón
+	if (maxHearts < 12) {
+		if (gourds >= gourdThresholds[maxHearts - 4]) {
+			increaseMaxHearts();
+		}
+	}
+}
+
+void Player::collectPotion()
+{
+	if (ligths < 3) {
+		ligths++;
+
+	}
+	else {
+		// Si ya tenemos el máximo, restaurar todos los corazones como si fuera un corazón grande
+		collectLargeHeart();
+	}
+}
+
+void Player::collectFlintSpear() {
+	flintSpearHits = 4; // 4 golpes con poder aumentado
+}
+
+void Player::collectBuffaloHelmet() {
+	buffaloHelmetHits = 4; // 4 golpes sin perder vida
+}
+
+void Player::collectDeerskinShirt() {
+	deerskinShirtActive = true;
+	deerskinTimer = 0.0f;
+	invulnerable = true; // Activar invulnerabilidad
+
+
+}
+
+// Getters para el estado de los power-ups
+int Player::getFlintSpearHits() const {
+	return flintSpearHits;
+}
+
+int Player::getBuffaloHelmetHits() const {
+	return buffaloHelmetHits;
+}
+
+bool Player::hasDeerskinShirt() const {
+	return deerskinShirtActive;
 }

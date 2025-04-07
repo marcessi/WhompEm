@@ -12,6 +12,10 @@
 #include "FallingStick.h"
 #include "HUD.h"
 #include "MovingPlatform.h" // Nueva inclusi�n
+#include "Orco.h"
+#include <map>
+#include "PowerUp.h"
+
 
 
 #define SCREEN_WIDTH 1024
@@ -34,6 +38,14 @@ enum MainMenuOption {
 	OPTION_CREDITS
 };
 
+enum OrcSpawnState {
+	SPAWN_AVAILABLE,   // El punto está disponible para spawneo inicial
+	SPAWN_ACTIVE,      // Hay un orco activo asociado a este punto
+	SPAWN_DEAD,        // El orco de este punto murió
+	SPAWN_LEFT_SCREEN  // El punto salió de la pantalla
+};
+
+
 // Scene contains all the entities of our game.
 // It is responsible for updating and render them.
 class Scene
@@ -49,8 +61,11 @@ public:
 
 	int getCurrentCheckpoint();
 	float getCameraLimit();
-	void setPlayerHealth(const glm::ivec4& health);
+	void setPlayerHealth( std::vector<int>& health);
 	void setPlayerLights(int lights);
+	void updateOrcos(int deltaTime);
+	void updatePowerUps(int deltaTime);
+	void spawnPowerUp(const glm::vec2& position, PowerUpType type);
 
 private:
 	void initShaders();
@@ -83,6 +98,10 @@ private:
 	bool keyPressed;
 	int keyPressedTimer;
 
+	std::vector<PowerUp*> powerUps;
+	
+	// ...
+
 	std::vector<FallingStick*> fallingSticks;
 	std::vector<float> stickPositionsX; // Posiciones X fijas para los palos
 	const float STICK_MIN_X = 980.0f;   // Límite inferior del área de palos
@@ -90,6 +109,12 @@ private:
 	const int NUM_STICKS = 5;           // Número total de palos
 	
 
+	std::vector<Orco*> orcos;
+	std::vector<float> orcoSpawnPositionsX;
+	
+	// Y cambia la declaración del vector:
+	std::vector<OrcSpawnState> orcoSpawnStates;
+	std::map<int, Orco*> spawnPointToOrco;
 	// Variables del juego
 	TileMap* mapWalls;
 	TileMap* mapBackground;
