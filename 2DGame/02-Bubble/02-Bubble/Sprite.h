@@ -34,6 +34,7 @@ public:
 	int animation() const;
 	int key_frame() const;
 	bool isAnimationFinished() const;
+	ShaderProgram* getShaderProgram() const { return shaderProgram; }
 	
 	void setAlpha(float alpha);
 	void setPosition(const glm::vec2 &pos);

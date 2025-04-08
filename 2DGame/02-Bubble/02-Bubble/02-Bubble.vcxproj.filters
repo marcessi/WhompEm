@@ -17,6 +17,7 @@
     <ClCompile Include="HUD.cpp" />
     <ClCompile Include="Orco.cpp" />
     <ClCompile Include="PowerUp.cpp" />
+    <ClCompile Include="Boss.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimKeyframes.h" />
@@ -35,5 +36,6 @@
     <ClInclude Include="HUD.h" />
     <ClInclude Include="Orco.h" />
     <ClInclude Include="PowerUp.h" />
+    <ClInclude Include="Boss.h" />
   </ItemGroup>
 </Project>

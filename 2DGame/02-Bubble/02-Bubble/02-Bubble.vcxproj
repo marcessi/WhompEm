@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimKeyframes.h" />
+    <ClInclude Include="Boss.h" />
     <ClInclude Include="FallingStick.h" />
     <ClInclude Include="AudioManager.h" />
     <ClInclude Include="Game.h" />
@@ -37,6 +38,7 @@
     <ClInclude Include="HUD.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Boss.cpp" />
     <ClCompile Include="FallingStick.cpp" />
     <ClCompile Include="AudioManager.cpp" />
     <ClCompile Include="Game.cpp" />

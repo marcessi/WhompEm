@@ -15,6 +15,7 @@
 #include "Orco.h"
 #include <map>
 #include "PowerUp.h"
+#include "Boss.h"
 
 
 
@@ -79,6 +80,7 @@ private:
 	void updateSnakes(int deltaTime);
 	bool checkSpikeCollision();
 	void updateFallingSticks(int deltaTime);
+	void updateBoss(int deltaTime);
 
 private:
 
@@ -108,6 +110,8 @@ private:
 	const float STICK_MAX_X = 1950.0f;  // Límite superior del área de palos
 	const int NUM_STICKS = 5;           // Número total de palos
 	
+	Boss* boss;
+	bool bossSpawned;
 
 	std::vector<Orco*> orcos;
 	std::vector<float> orcoSpawnPositionsX;

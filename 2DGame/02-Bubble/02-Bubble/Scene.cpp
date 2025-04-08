@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 205 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 33 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
 
@@ -119,6 +119,10 @@ Scene::~Scene()
     }
     powerUps.clear();
 
+    if (boss != nullptr) {
+        delete boss;
+    }
+
 	movingPlatforms.clear();
 }
 
@@ -141,6 +145,8 @@ void Scene::init()
     hud = new HUD();
     hud->init(glm::ivec2(2, 2), texProgram);
     
+    boss = nullptr;
+    bossSpawned = false;
 
     pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
     hud->syncWithPlayer(playerLifes.first, playerLifes.second);
@@ -461,7 +467,6 @@ void Scene::updateGameplay(int deltaTime)
     pair<std::vector<int>, int> currentLifeState = player->getplayerLifes();
 
     glm::ivec2 posPlayer = player->getPosition();
-	cout << "Player position: " << posPlayer.x << ", " << posPlayer.y << endl;
     
 
     // Comprobar si el jugador está sobre pinchos
@@ -478,6 +483,7 @@ void Scene::updateGameplay(int deltaTime)
     updateFallingSticks(deltaTime);
     updateOrcos(deltaTime);
     updatePowerUps(deltaTime);
+   
 
     // Si el jugador recibió daño, actualizar el HUD inmediatamente
         hud->syncWithPlayer(currentLifeState.first, currentLifeState.second);
@@ -503,6 +509,7 @@ void Scene::updateGameplay(int deltaTime)
         }
     }
 
+    updateBoss(deltaTime);
     // Ejecutar la animaci�n de desplazamiento a la derecha
     if (isAnimating)
     {
@@ -594,7 +601,7 @@ void Scene::updateOrcos(int deltaTime)
                 if (it == spawnPointToOrco.end() || it->second == nullptr || !it->second->isAlive() || orcoSpawnStates[i] == SPAWN_DEAD) {
                     orcoSpawnStates[i] = SPAWN_AVAILABLE; // Punto disponible para nuevo orco
                     spawnPointToOrco.erase(i); // Eliminar la referencia al orco anterior
-                    std::cout << "Punto " << i << " disponible para spawn" << std::endl;
+                    
                 }
                 else {
                     // Si el orco sigue existiendo, mantener como activo
@@ -633,13 +640,11 @@ void Scene::updateOrcos(int deltaTime)
                     orcos.push_back(newOrco);
                     orcoSpawnStates[i] = SPAWN_ACTIVE;
 
-                    std::cout << "Orco generado en punto " << i << " (X=" << spawnX << ")" << std::endl;
                 }
             }
         }
         else { // Si el punto no es visible
                 orcoSpawnStates[i] = SPAWN_LEFT_SCREEN;
-                std::cout << "Punto " << i << " ha salido de la pantalla" << std::endl;
             
         }
     }
@@ -688,7 +693,6 @@ void Scene::updateOrcos(int deltaTime)
                     // Si el orco murió, marcar punto como muerto
                     if (!orco->isAlive()) {
                         orcoSpawnStates[spawnIndex] = SPAWN_DEAD;
-                        std::cout << "Orco muerto en punto " << spawnIndex << std::endl;
                     }
 
                     // Eliminar la referencia al orco en el mapa
@@ -965,6 +969,7 @@ void Scene::renderGameplay()
     mapWalls->render();
     mapPlatforms->render();
 
+
     // Renderizar las plataformas m�viles
     for (auto platform : movingPlatforms) {
         platform->render();
@@ -999,6 +1004,9 @@ void Scene::renderGameplay()
     
     player->render();
 
+    if (boss != nullptr) {
+        boss->render();
+    }
 
 
     //Reiniciar modelview y renderizar parte delantera
@@ -1045,7 +1053,6 @@ void Scene::updateFallingSticks(int deltaTime)
     float camBottom = camY + CAMERA_HEIGHT;
 
     if (fallingSticks.size() != stickPositionsX.size()) {
-        cout << "Error: fallingSticks y stickPositionsX tienen tamaños diferentes!" << endl;
         return;
     }
 
@@ -1130,6 +1137,97 @@ void Scene::updateFallingSticks(int deltaTime)
                 // Hacer que caiga inmediatamente
                 stick->startFalling(); 
             }
+        }
+    }
+}
+
+void Scene::updateBoss(int deltaTime)
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+    float camRight = camX + CAMERA_WIDTH;
+    float camBottom = camY + CAMERA_HEIGHT;
+
+    // Si el boss no ha sido creado y estamos en la zona del boss
+    if (!bossSpawned && bossCam) {
+        boss = new Boss();
+        boss->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
+        // Posicionar el boss a una altura similar a la del suelo donde está el jugador
+        // pero un poco a la derecha para que sea visible
+        float floorY = 770.0f; // Altura aproximada del suelo en esta zona
+        boss->setPosition(glm::vec2(4000.f, posPlayer.y + 5.f)); // Restamos el tamaño del boss
+        boss->setTileMap(mapWalls, mapPlatforms);
+        boss->setPlayerPosition(&posPlayer);
+
+        // Configurar callback para daño al jugador
+        boss->setPlayerHitCallback([this]() {
+            if (!player->isInvulnerable()) {
+                player->isHitted();
+            }
+            });
+
+        bossSpawned = true;
+    }
+
+    // Actualizar el boss si existe
+    if (boss != nullptr) {
+        // Debug info
+        if (bossSpawned) {
+            glm::ivec2 bossPos = boss->getPosition();
+            cout << "Boss position: " << bossPos.x << ", " << bossPos.y << " - State: " << boss->getStateString() << endl;
+        }
+
+        boss->update(deltaTime);
+        boss->setPlayerPosition(&posPlayer);
+
+        // Obtener los sticks controlados por el Boss y actualizarlos si hay colisión con el jugador
+        std::vector<FallingStick*>& bossSticks = boss->getFallingSticks();
+        for (FallingStick* stick : bossSticks) {
+            // Verificar colisión con el jugador
+            if (stick->collisionWithPlayer(posPlayer, glm::ivec2(32, 32))) {
+                // Comprobar si el jugador está en modo protección
+                if (player->isProtecting()) {
+                    // Calcular dirección del rebote basado en la posición relativa al jugador
+                    float reboteDir = (stick->getPosition().x > posPlayer.x) ? 1.0f : -1.0f;
+                    stick->killStick(reboteDir);
+                }
+                else {
+                    // El jugador recibe daño
+                    player->isHitted();
+
+                    // Actualizar el HUD
+                    pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
+                    hud->syncWithPlayer(playerLifes.first, playerLifes.second);
+                }
+            }
+        }
+
+        // Comprobar si el jugador golpea al boss con la lanza
+        glm::ivec2 bossPos = boss->getPosition();
+        glm::ivec2 bossSize = boss->getSize();
+        if (player->checkSpearCollision(bossPos, bossSize)) {
+            boss->hit();
+            cout << "Boss hit!" << endl;
+        }
+
+        // Si el boss muere, generar un power-up importante
+        if (!boss->isAlive()) {
+            // Generar power-up de tipo grande
+            spawnPowerUp(glm::vec2(bossPos.x + 32, bossPos.y + 32), LARGE_HEART);
+
+            // Eliminar el boss
+            delete boss;
+            boss = nullptr;
+
+            // Cambiar la música de vuelta a la normal
+            audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
+
+            // Cambiar a modo de cámara normal
+            bossCam = false;
+            currentCheckpoint = 4; // Volver al checkpoint anterior
+            cout << "Boss defeated!" << endl;
         }
     }
 }
