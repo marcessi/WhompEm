@@ -367,6 +367,116 @@ void Scene::initSounds() {
     audioManager.loadSound("victory", "sounds/victory.mp3");
 }
 
+void Scene::resetGame()
+{
+    // Reiniciar estado del juego
+    gameState = MENU_MAIN;
+    currentOption = OPTION_START_GAME;
+    bossDefeated = false;
+    menuTime = 0.0f;
+    currentTime = 0.0f;
+
+	audioManager.stopAllSounds();
+
+    // Limpiar entidades del juego
+    // Limpiar orcos
+    for (auto orco : orcos) {
+        delete orco;
+    }
+    orcos.clear();
+    spawnPointToOrco.clear();
+    orcoSpawnStates.clear();
+    orcoSpawnStates.resize(orcoSpawnPositionsX.size(), SPAWN_AVAILABLE);
+
+    // Limpiar serpientes
+    for (auto snake : snakes) {
+        delete snake;
+    }
+    snakes.clear();
+    snakeSpawnTimer = 0.0f;
+
+    // Limpiar power-ups
+    for (auto powerUp : powerUps) {
+        delete powerUp;
+    }
+    powerUps.clear();
+
+    // Reiniciar sticks
+    for (auto stick : fallingSticks) {
+        delete stick;
+    }
+    fallingSticks.clear();
+    stickPositionsX.clear();
+
+    // Generar nuevas posiciones X para los palos
+    float range1Size = STICK_RANGE1_MAX - STICK_RANGE1_MIN;
+    float range2Size = STICK_RANGE2_MAX - STICK_RANGE2_MIN;
+    float totalRangeSize = range1Size + range2Size;
+
+    int sticksInRange1 = static_cast<int>(NUM_STICKS * (range1Size / totalRangeSize));
+    int sticksInRange2 = NUM_STICKS - sticksInRange1;
+
+    // Generar posiciones X para el primer rango
+    if (sticksInRange1 > 0) {
+        float interval1 = range1Size / (sticksInRange1 - 1);
+        for (int i = 0; i < sticksInRange1; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE1_MIN + i * interval1 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
+    }
+
+    // Generar posiciones X para el segundo rango
+    if (sticksInRange2 > 0) {
+        float interval2 = range2Size / (sticksInRange2 - 1);
+        for (int i = 0; i < sticksInRange2; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE2_MIN + i * interval2 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
+    }
+
+    // Inicializar los falling sticks con posiciones iniciales aleatorias en Y
+    for (int i = 0; i < stickPositionsX.size(); ++i) {
+        FallingStick* stick = new FallingStick();
+        stick->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
+        // Distribuir verticalmente para que no todos empiecen al mismo tiempo
+        float initialY = -300.0f + rand() % 600; // Más distribución vertical
+        stick->setPosition(glm::vec2(stickPositionsX[i], initialY));
+        stick->setTileMap(mapWalls, mapPlatforms);
+
+        // Iniciar directamente en modo falling (para evitar esperas)
+        stick->startFalling();
+
+        fallingSticks.push_back(stick);
+    }
+
+    // Reiniciar el player
+    player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
+
+    // Reiniciar el jugador (llamamos a init en lugar de crear uno nuevo)
+    player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+    player->setAudioManager(&audioManager);
+    player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
+    player->setTileMap(mapWalls, mapPlatforms);
+    player->setMovingPlatforms(&movingPlatforms);
+
+    // Reiniciar variables de cámara
+    followHorizontal = true;
+    currentCheckpoint = 0;
+    isAnimating = false;
+    bossCam = false;
+    animationProgress = 0.0f;
+
+    // Reiniciar HUD
+    pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
+    hud->syncWithPlayer(playerLifes.first, playerLifes.second);
+
+    // Reiniciar proyección a la posición inicial
+    projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
+}
+
 void Scene::update(int deltaTime)
 {
     audioManager.update();
@@ -450,7 +560,7 @@ void Scene::handleMenuInput()
             gameState = MENU_MAIN;
             keyPressed = true;
             // Reiniciar el juego
-            init();
+            resetGame();
         }
         break;
     }
@@ -564,7 +674,6 @@ void Scene::updateGameplay(int deltaTime)
         followHorizontal = !followHorizontal; // Invertir la direcci�n de seguimiento
         if (currentCheckpoint == 5) {
             bossCam = true;
-            bossDefeated = true;
 			audioManager.playMusic("sounds/boss_music.mp3", true, 0.4f);
         }
     }

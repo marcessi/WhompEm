@@ -36,6 +36,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	audioManager = nullptr;
 	jumpSoundPlayed = false;
 	spearSoundPlayed = false;
+	gameover = false;
 	knockbackAngle = 0;
 	knockbackJumping = false;
 	knockbackDir = 0;
@@ -199,14 +200,14 @@ void Player::update(int deltaTime)
 
 	if (hitted) {
 		hitTimer += deltaTime;
-		invulnerable = true;
+		invulnerable = false;
 
 		// Mostrar animación de golpe durante un tiempo corto
 		if (hitTimer > 300) { // 0.3 segundos
 			hitted = false;
 			spear_visible = false;
 			hitTimer = 0;
-			invulnerable = true;
+			invulnerable = false;
 			invulnerableTimer = 0;
 			knockbackJumping = false;
 			knockbackAngle = 0;

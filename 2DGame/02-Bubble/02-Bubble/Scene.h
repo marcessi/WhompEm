@@ -74,6 +74,7 @@ private:
 	void initShaders();
 	void initMenus();
 	void initSounds();
+	void resetGame();
 
 	void updateMenu(int deltaTime);
 	void updateGameplay(int deltaTime);
