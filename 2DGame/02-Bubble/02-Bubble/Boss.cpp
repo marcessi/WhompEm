@@ -430,7 +430,7 @@ void Boss::updateGroundedState(int deltaTime)
         int bossBottom = position.y + bossSize.y;
         int auxY = bossBottom;
 
-        if (position.y >= 590.f) {
+        if (position.y >= 592.f) {
             position.y = auxY - bossSize.y;
             vy = 0;
             visible = false;

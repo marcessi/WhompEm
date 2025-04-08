@@ -36,6 +36,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	audioManager = nullptr;
 	jumpSoundPlayed = false;
 	spearSoundPlayed = false;
+	gameover = false;
 	knockbackAngle = 0;
 	knockbackJumping = false;
 	knockbackDir = 0;
@@ -44,6 +45,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	invulnerable = false;
 	hitTimer = 0;
 	invulnerableTimer = 0;
+	hitted = false;
 	
 	ligths = 2;
 	first_attack = false;

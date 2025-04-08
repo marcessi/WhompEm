@@ -50,6 +50,10 @@ Scene::Scene()
     keyPressed = false;
     keyPressedTimer = 0;
 
+    gameOverSprite = NULL;
+    victorySprite = NULL;
+    bossDefeated = false;
+
     for (int i = 0; i < 3; i++) {
         mainMenuSprites[i] = NULL;
     }
@@ -81,6 +85,16 @@ Scene::~Scene()
             mainMenuSprites[i]->free();
             delete mainMenuSprites[i];
         }
+    }
+
+    if (gameOverSprite != NULL) {
+        gameOverSprite->free();
+        delete gameOverSprite;
+    }
+
+    if (victorySprite != NULL) {
+        victorySprite->free();
+        delete victorySprite;
     }
 
     if (instructionsSprite != NULL) {
@@ -299,7 +313,8 @@ void Scene::initMenus()
     Texture* texSelCredits = new Texture();
     Texture* texControls = new Texture();
     Texture* texCredits = new Texture();
-
+    Texture* texGameOver = new Texture();
+    Texture* texVictory = new Texture();
 
     // Cargar las texturas del men� principal
     texStart->loadFromFile("images/start.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -311,10 +326,13 @@ void Scene::initMenus()
     texSelControls->loadFromFile("images/main_controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texSelCredits->loadFromFile("images/main_credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
 
-
     // Cargar las texturas de instrucciones y cr�ditos
     texControls->loadFromFile("images/controls.png", TEXTURE_PIXEL_FORMAT_RGBA);
     texCredits->loadFromFile("images/credits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    texGameOver->loadFromFile("images/gameover_screen.png", TEXTURE_PIXEL_FORMAT_RGBA);
+    texVictory->loadFromFile("images/win_screen.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
 
     // Crear los sprites del men� principal con las texturas
     mainMenuSprites[OPTION_START_GAME] = Sprite::createSprite(quadSize, sizeInSpritesheet, texStart, &texProgram);
@@ -332,6 +350,13 @@ void Scene::initMenus()
 
     creditsSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texCredits, &texProgram);
     creditsSprite->setPosition(glm::vec2(0.f, 0.f));
+
+    // Crear los sprites para game over y victoria
+    gameOverSprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texGameOver, &texProgram);
+    gameOverSprite->setPosition(glm::vec2(0.f, 0.f));
+
+    victorySprite = Sprite::createSprite(quadSize, sizeInSpritesheet, texVictory, &texProgram);
+    victorySprite->setPosition(glm::vec2(0.f, 0.f));
 }
 
 void Scene::initSounds() {
@@ -342,6 +367,117 @@ void Scene::initSounds() {
     audioManager.loadSound("spear", "sounds/spear.mp3");
     audioManager.loadSound("menu_move", "sounds/menu_move.mp3");
     audioManager.loadSound("menu_select", "sounds/menu_select.mp3");
+
+    // Nuevos sonidos para game over y victoria
+    audioManager.loadSound("game_over", "sounds/game_over.mp3");
+    audioManager.loadSound("victory", "sounds/victory.mp3");
+}
+
+void Scene::resetGame()
+{
+    // Reiniciar estado del juego
+    gameState = MENU_MAIN;
+    currentOption = OPTION_START_GAME;
+    bossDefeated = false;
+    menuTime = 0.0f;
+    currentTime = 0.0f;
+
+	audioManager.stopAllSounds();
+
+    // Limpiar entidades del juego
+    // Limpiar orcos
+    for (auto orco : orcos) {
+        delete orco;
+    }
+    orcos.clear();
+    spawnPointToOrco.clear();
+    orcoSpawnStates.clear();
+    orcoSpawnStates.resize(orcoSpawnPositionsX.size(), SPAWN_AVAILABLE);
+
+    // Limpiar serpientes
+    for (auto snake : snakes) {
+        delete snake;
+    }
+    snakes.clear();
+    snakeSpawnTimer = 0.0f;
+
+    // Limpiar power-ups
+    for (auto powerUp : powerUps) {
+        delete powerUp;
+    }
+    powerUps.clear();
+
+    // Reiniciar sticks
+    for (auto stick : fallingSticks) {
+        delete stick;
+    }
+    fallingSticks.clear();
+    stickPositionsX.clear();
+
+    // Generar nuevas posiciones X para los palos
+    float range1Size = STICK_RANGE1_MAX - STICK_RANGE1_MIN;
+    float range2Size = STICK_RANGE2_MAX - STICK_RANGE2_MIN;
+    float totalRangeSize = range1Size + range2Size;
+
+    int sticksInRange1 = static_cast<int>(NUM_STICKS * (range1Size / totalRangeSize));
+    int sticksInRange2 = NUM_STICKS - sticksInRange1;
+
+    // Generar posiciones X para el primer rango
+    if (sticksInRange1 > 0) {
+        float interval1 = range1Size / (sticksInRange1 - 1);
+        for (int i = 0; i < sticksInRange1; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE1_MIN + i * interval1 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
+    }
+
+    // Generar posiciones X para el segundo rango
+    if (sticksInRange2 > 0) {
+        float interval2 = range2Size / (sticksInRange2 - 1);
+        for (int i = 0; i < sticksInRange2; ++i) {
+            float randomOffset = (rand() % 40) - 20.0f; // Variación de ±20 píxeles
+            float xPos = STICK_RANGE2_MIN + i * interval2 + randomOffset;
+            stickPositionsX.push_back(xPos);
+        }
+    }
+
+    // Inicializar los falling sticks con posiciones iniciales aleatorias en Y
+    for (int i = 0; i < stickPositionsX.size(); ++i) {
+        FallingStick* stick = new FallingStick();
+        stick->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
+        // Distribuir verticalmente para que no todos empiecen al mismo tiempo
+        float initialY = -300.0f + rand() % 600; // Más distribución vertical
+        stick->setPosition(glm::vec2(stickPositionsX[i], initialY));
+        stick->setTileMap(mapWalls, mapPlatforms);
+
+        // Iniciar directamente en modo falling (para evitar esperas)
+        stick->startFalling();
+
+        fallingSticks.push_back(stick);
+    }
+
+    player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
+    player->setAudioManager(&audioManager);
+    player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
+    player->setTileMap(mapWalls, mapPlatforms);
+    player->setMovingPlatforms(&movingPlatforms);
+
+    // Reiniciar variables de cámara
+    followHorizontal = true;
+    currentCheckpoint = 0;
+    isAnimating = false;
+    bossCam = false;
+    animationProgress = 0.0f;
+
+    // Reiniciar HUD
+    pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
+    hud->syncWithPlayer(playerLifes.first, playerLifes.second);
+
+    // Reiniciar proyección a la posición inicial
+    projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
 }
 
 void Scene::update(int deltaTime)
@@ -352,6 +488,8 @@ void Scene::update(int deltaTime)
     case MENU_MAIN:
     case MENU_INSTRUCTIONS:
     case MENU_CREDITS:
+    case GAME_OVER:
+    case VICTORY:
         updateMenu(deltaTime);
         break;
     case GAMEPLAY:
@@ -359,7 +497,6 @@ void Scene::update(int deltaTime)
         break;
     }
 }
-
 
 void Scene::handleMenuInput()
 {
@@ -369,7 +506,7 @@ void Scene::handleMenuInput()
     switch (gameState)
     {
     case MENU_MAIN:
-        // Navegaci�n entre opciones
+        // Navegación entre opciones
         if (Game::instance().getKey(GLFW_KEY_DOWN))
         {
             currentOption = static_cast<MainMenuOption>((currentOption + 1) % 3); // 3 opciones en total
@@ -383,7 +520,7 @@ void Scene::handleMenuInput()
             audioManager.playSound("menu_move", 0.5f);
         }
 
-        // Selecci�n de opci�n
+        // Selección de opción
         else if (Game::instance().getKey(GLFW_KEY_ENTER) || Game::instance().getKey(GLFW_KEY_SPACE))
         {
             keyPressed = true;
@@ -392,7 +529,7 @@ void Scene::handleMenuInput()
             {
             case OPTION_START_GAME:
                 gameState = GAMEPLAY;
-				audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
+                audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
                 break;
             case OPTION_INSTRUCTIONS:
                 gameState = MENU_INSTRUCTIONS;
@@ -406,7 +543,7 @@ void Scene::handleMenuInput()
 
     case MENU_INSTRUCTIONS:
     case MENU_CREDITS:
-        // Volver al men� principal con cualquier tecla
+        // Volver al menú principal con cualquier tecla
         if (Game::instance().getKey(GLFW_KEY_ENTER) ||
             Game::instance().getKey(GLFW_KEY_ESCAPE) ||
             Game::instance().getKey(GLFW_KEY_SPACE))
@@ -415,6 +552,41 @@ void Scene::handleMenuInput()
             keyPressed = true;
         }
         break;
+
+    case GAME_OVER:
+    case VICTORY:
+        // Manejar la lógica de fin de juego (antes en handleGameEndInput)
+        if (Game::instance().getKey(GLFW_KEY_ENTER) ||
+            Game::instance().getKey(GLFW_KEY_ESCAPE) ||
+            Game::instance().getKey(GLFW_KEY_SPACE))
+        {
+            gameState = MENU_MAIN;
+            keyPressed = true;
+            // Reiniciar el juego
+            resetGame();
+        }
+        break;
+    }
+}
+
+void Scene::checkGameEndConditions()
+{
+    // Verificar condición de game over
+    if (player->isGameOver())
+    {
+        gameState = GAME_OVER;
+        audioManager.stopAllSounds();
+        audioManager.stopMusic();
+        audioManager.playSound("game_over", 0.6f);
+    }
+
+    // Verificar condición de victoria (cuando el boss es derrotado)
+    if (bossDefeated)
+    {
+        gameState = VICTORY;
+        audioManager.stopAllSounds();
+        audioManager.stopMusic();
+        audioManager.playSound("victory", 0.6f);
     }
 }
 
@@ -467,6 +639,7 @@ void Scene::updateGameplay(int deltaTime)
     pair<std::vector<int>, int> currentLifeState = player->getplayerLifes();
 
     glm::ivec2 posPlayer = player->getPosition();
+
     
 
     // Comprobar si el jugador está sobre pinchos
@@ -575,7 +748,9 @@ void Scene::updateGameplay(int deltaTime)
     
 
     hud->update(deltaTime);
+    checkGameEndConditions();
 }
+
 void Scene::updateOrcos(int deltaTime)
 {
     // Calcular los límites de la cámara
@@ -601,7 +776,7 @@ void Scene::updateOrcos(int deltaTime)
                 if (it == spawnPointToOrco.end() || it->second == nullptr || !it->second->isAlive() || orcoSpawnStates[i] == SPAWN_DEAD) {
                     orcoSpawnStates[i] = SPAWN_AVAILABLE; // Punto disponible para nuevo orco
                     spawnPointToOrco.erase(i); // Eliminar la referencia al orco anterior
-                    
+
                 }
                 else {
                     // Si el orco sigue existiendo, mantener como activo
@@ -645,6 +820,7 @@ void Scene::updateOrcos(int deltaTime)
         }
         else { // Si el punto no es visible
                 orcoSpawnStates[i] = SPAWN_LEFT_SCREEN;
+
             
         }
     }
@@ -693,6 +869,7 @@ void Scene::updateOrcos(int deltaTime)
                     // Si el orco murió, marcar punto como muerto
                     if (!orco->isAlive()) {
                         orcoSpawnStates[spawnIndex] = SPAWN_DEAD;
+
                     }
 
                     // Eliminar la referencia al orco en el mapa
@@ -916,16 +1093,7 @@ void Scene::updateSnakes(int deltaTime)
 
 void Scene::render()
 {
-    glm::mat4 modelview;
-
-    texProgram.use();
-    texProgram.setUniformMatrix4f("projection", projection);
-    texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
-    modelview = glm::mat4(1.0f);
-    texProgram.setUniformMatrix4f("modelview", modelview);
-    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
-
-    // Elegir qu� renderizar seg�n el estado actual
+    // Elegir qué renderizar según el estado actual
     if (gameState == GAMEPLAY) {
         renderGameplay();
     }
@@ -936,8 +1104,15 @@ void Scene::render()
 
 void Scene::renderMenu()
 {
+    glm::mat4 modelview;
 
-	texProgram.use();
+    texProgram.use();
+    projection = glm::ortho(0.f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.f);
+    texProgram.setUniformMatrix4f("projection", projection);
+    texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+    modelview = glm::mat4(1.0f);
+    texProgram.setUniformMatrix4f("modelview", modelview);
+    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 
     // Renderizar el sprite apropiado seg�n el estado actual
     switch (gameState)
@@ -957,13 +1132,30 @@ void Scene::renderMenu()
             creditsSprite->render();
         }
         break;
+    case GAME_OVER:
+        if (gameOverSprite != nullptr) {
+            gameOverSprite->render();
+        }
+        break;
+    case VICTORY:
+        if (victorySprite != nullptr) {
+            victorySprite->render();
+        }
+        break;
     }
 }
 
 void Scene::renderGameplay()
 {
 
+    glm::mat4 modelview;
+
     texProgram.use();
+    texProgram.setUniformMatrix4f("projection", projection);
+    texProgram.setUniform4f("color", 1.0f, 1.0f, 1.0f, 1.0f);
+    modelview = glm::mat4(1.0f);
+    texProgram.setUniformMatrix4f("modelview", modelview);
+    texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 
     mapBackground->render();
     mapWalls->render();
@@ -1010,14 +1202,12 @@ void Scene::renderGameplay()
 
 
     //Reiniciar modelview y renderizar parte delantera
-    glm::mat4 modelview = glm::mat4(1.0f);
+    modelview = glm::mat4(1.0f);
     texProgram.setUniformMatrix4f("modelview", modelview);
     texProgram.setUniform2f("texCoordDispl", 0.f, 0.f);
 
     mapFrontal->render();
     hud->render();
-
-
 }
 
 int Scene::getCurrentCheckpoint()
@@ -1042,7 +1232,10 @@ void Scene::setPlayerLights(int lights)
         hud->setLights(lights);
 }
 
-
+void Scene::setBossDefeated()
+{
+    bossDefeated = true;
+}
 
 void Scene::updateFallingSticks(int deltaTime)
 {
@@ -1157,7 +1350,7 @@ void Scene::updateBoss(int deltaTime)
         // Posicionar el boss a una altura similar a la del suelo donde está el jugador
         // pero un poco a la derecha para que sea visible
         float floorY = 770.0f; // Altura aproximada del suelo en esta zona
-        boss->setPosition(glm::vec2(4000.f, posPlayer.y + 5.f)); // Restamos el tamaño del boss
+        boss->setPosition(glm::vec2(4000.f, posPlayer.y - 5.f)); // Restamos el tamaño del boss
         boss->setTileMap(mapWalls, mapPlatforms);
         boss->setPlayerPosition(&posPlayer);
 
@@ -1176,7 +1369,6 @@ void Scene::updateBoss(int deltaTime)
         // Debug info
         if (bossSpawned) {
             glm::ivec2 bossPos = boss->getPosition();
-            cout << "Boss position: " << bossPos.x << ", " << bossPos.y << " - State: " << boss->getStateString() << endl;
         }
 
         boss->update(deltaTime);
@@ -1227,7 +1419,6 @@ void Scene::updateBoss(int deltaTime)
             // Cambiar a modo de cámara normal
             bossCam = false;
             currentCheckpoint = 4; // Volver al checkpoint anterior
-            cout << "Boss defeated!" << endl;
         }
     }
 }
