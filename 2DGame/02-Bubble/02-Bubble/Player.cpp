@@ -45,6 +45,7 @@ void Player::init(const glm::ivec2 &tileMapPos, ShaderProgram &shaderProgram)
 	invulnerable = false;
 	hitTimer = 0;
 	invulnerableTimer = 0;
+	hitted = false;
 	
 	ligths = 2;
 	first_attack = false;

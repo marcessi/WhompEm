@@ -452,11 +452,8 @@ void Scene::resetGame()
         fallingSticks.push_back(stick);
     }
 
-    // Reiniciar el player
-    player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
-
-    // Reiniciar el jugador (llamamos a init en lugar de crear uno nuevo)
     player->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
     player->setAudioManager(&audioManager);
     player->setPosition(glm::vec2(INIT_PLAYER_X_TILES * mapWalls->getTileSize(), INIT_PLAYER_Y_TILES * mapWalls->getTileSize()));
     player->setTileMap(mapWalls, mapPlatforms);
