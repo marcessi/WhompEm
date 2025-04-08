@@ -28,7 +28,9 @@ enum GameState {
 	MENU_MAIN,
 	MENU_INSTRUCTIONS,
 	MENU_CREDITS,
-	GAMEPLAY
+	GAMEPLAY,
+	GAME_OVER,
+	VICTORY
 };
 
 // Enumeraci�n para las opciones del men� principal
@@ -63,6 +65,7 @@ public:
 	float getCameraLimit();
 	void setPlayerHealth( std::vector<int>& health);
 	void setPlayerLights(int lights);
+	void setBossDefeated();
 	void updateOrcos(int deltaTime);
 	void updatePowerUps(int deltaTime);
 	void spawnPowerUp(const glm::vec2& position, PowerUpType type);
@@ -71,14 +74,19 @@ private:
 	void initShaders();
 	void initMenus();
 	void initSounds();
+
 	void updateMenu(int deltaTime);
 	void updateGameplay(int deltaTime);
+
 	void renderMenu();
 	void renderGameplay();
+
 	void handleMenuInput();
+
 	void updateSnakes(int deltaTime);
 	bool checkSpikeCollision();
 	void updateFallingSticks(int deltaTime);
+	void checkGameEndConditions();
 
 private:
 
@@ -93,14 +101,16 @@ private:
 	Sprite* mainMenuSprites[3]; // Un sprite para cada opci�n del men� principal
 	Sprite* instructionsSprite; // Sprite para la pantalla de instrucciones
 	Sprite* creditsSprite;      // Sprite para la pantalla de cr
+	Sprite* gameOverSprite;
+	Sprite* victorySprite;
 
 	float menuTime;
 	bool keyPressed;
 	int keyPressedTimer;
 
+	bool bossDefeated;
+
 	std::vector<PowerUp*> powerUps;
-	
-	// ...
 
 	std::vector<FallingStick*> fallingSticks;
 	std::vector<float> stickPositionsX; // Posiciones X fijas para los palos

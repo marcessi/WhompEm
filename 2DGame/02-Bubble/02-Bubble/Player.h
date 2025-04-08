@@ -44,6 +44,7 @@ public:
     void collectGourd();
     int getGourds() const { return gourds; }
     int getMaxHearts() const { return maxHearts; }
+    bool isGameOver() const { return gameover; }
     void increaseMaxHearts();
     void collectPotion();
     void collectFlintSpear();
