@@ -200,14 +200,14 @@ void Player::update(int deltaTime)
 
 	if (hitted) {
 		hitTimer += deltaTime;
-		invulnerable = false;
+		invulnerable = true;
 
 		// Mostrar animación de golpe durante un tiempo corto
 		if (hitTimer > 300) { // 0.3 segundos
 			hitted = false;
 			spear_visible = false;
 			hitTimer = 0;
-			invulnerable = false;
+			invulnerable = true;
 			invulnerableTimer = 0;
 			knockbackJumping = false;
 			knockbackAngle = 0;
