@@ -1,0 +1,78 @@
+Noms:
+Marc Escribano Sierra
+Sergi Sanmartín Soria
+
+Funcionalitats: 
+Jugaodor: EL jugador té totes les animacions seguents:
+- picar mentres salta, picar ajupit, picar caminant,  picar quiet, picar mentre salta cap a Amunt, i picar mentre cau cap a avall
+- protegir-se
+- moure's
+- saltar
+- cambiar de arma al tótem, que en aquest cas és el totem de gel, que si toca a un enemic el congela
+
+PowerUps:
+- cor petit: recupera un cor petit 
+- cor gran: recupera tota la filera de cors
+- carbassa: cada x guanyes un cor nou, la quantitat necesaria pe cad cor nou és la mateixa que en el joc original
+- Flint: augmetna la capacitat de fer mal del jugador, es a dir el ogres per exemple moren de un cop(el boss no), dura 4 atacs que entren en contacte
+- helmet: durant 4 cops no li fan mal
+- deerskin shirt: es invencible e invisible durant 5 segons
+- magic potion: te una filera de vides extres
+- spear: fa la llansa més llarga durant la resta de la partida
+
+Quan passes per la calavera surt un poer-up de cor gran co al joc original
+
+So:
+- música de fons del nivell
+- música de fons del boss
+
+
+Pantalles:
+-inici
+-credits
+-instruccions
+-pantalla final
+
+HUD: mostra les vides en froma de cor, les pocions màgiques que li queden, la arma que està usant, i els power-ups a la part d'abaic de helmet, flint i deerskin shirt
+
+Instruccions:
+
+Jugador:
+ -c: cambiar de arma
+ -x: picar (amb llansa/totem de gel)
+ -z:saltar
+ - fletxa amunt: protegir-se
+ - fletxa avall: ajupir-se
+ - fletxa dreta: moure's
+ - fletxa esquerra: moure's
+	COMBINACIONS:
+	Z+X: picar saltant
+	Z + fltexa amunt: picar cap a amunt
+ 	Z + fletxa avall: picar cap a avall
+	fletxa avall + x: picar ajupit
+	fletxa dreta/Esquerra +x moure's picant
+ -h: recupera tots els cors
+ -g: god mode, es invencible
+
+
+
+Enemics:
+ -Bambú:
+Els trossos de bambú que cauen del cel sempre van caient en la mateixa posició x i al única manera de que parin de caure, és que el jugador el toqui en posició de protecció, en la cual no li fa mal. (El bambú del terra també fa mal)
+
+- Ogre:
+El ogre té dos vides, i va saltant sempre cap al jugador
+
+-Serps:
+Les serps es generen dos en pantalla, y van recorrent el eix de la x, delimitat per la pantalla en el moment que es generen indefinidament fins que deixen de estar visibles o el jugador les elimina, llavors sen generen de noves.
+
+Tant els ogres com les serps droppejen de manera totalmente aleatoria els powerups.
+Els enemics es generen al mateix lloc que al joc original
+
+-Boss final:
+El boss te un posició incial que té al principi de tot, despres comensa a volar i dispara bambú de les mans, si passen 8 segons o el piqeun cambia a estat vola, durant dos segons o fins que el piquin, llavors baixa al terra, despareix, baixen bambñus a la veagda, mentres hoy ha una animaciío de fulles, i torna a apraeixer uns moment i torna a volar i dispara i entrar en cicle, la vida del boss es pot veure al hud. Al final deixa anar el seu totem quan mor i es mostra la pantalla final.
+
+
+
+
+	
