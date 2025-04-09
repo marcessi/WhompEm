@@ -1436,7 +1436,7 @@ void Scene::updateBoss(int deltaTime)
         // Comprobar si el jugador golpea al boss con la lanza
         glm::ivec2 bossPos = boss->getPosition();
         glm::ivec2 bossSize = boss->getSize();
-        if (player->checkSpearCollision(bossPos, bossSize)) {
+        if (player->getCurrentWeapon() != ICE_TOTEM && player->checkSpearCollision(bossPos, bossSize)) {
             boss->hit();
             if (hud != nullptr) {
                 std::pair<std::vector<int>, int> bossLives = boss->getLives();
