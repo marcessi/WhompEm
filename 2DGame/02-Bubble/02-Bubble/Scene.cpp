@@ -1446,11 +1446,9 @@ void Scene::updateBoss(int deltaTime)
             boss = nullptr;
 
             // Cambiar la música de vuelta a la normal
-            audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
+            audioManager.stopMusic();
+			audioManager.playSound("boss_defeated", 0.6f);
 
-            // Cambiar a modo de cámara normal
-            bossCam = false;
-            currentCheckpoint = 0; // Volver al checkpoint anterior
             if (hud != nullptr) {
                 hud->showBossHealthBar(false);
             }
