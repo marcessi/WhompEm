@@ -63,6 +63,10 @@ public:
     int getBuffaloHelmetHits() const;
     bool hasDeerskinShirt() const;
 
+
+    void activateSpearLarge(bool activate); // Función para activar/desactivar la lanza grande
+    bool isSpearLargeActive() const { return spearLargeActive; }
+
 private:
     bool bJumping;
     glm::ivec2 tileMapDispl, posPlayer;
@@ -75,6 +79,8 @@ private:
     Sprite* sprite_ice_totem;
     WeaponType currentWeapon;
     bool weaponSwitchPressed;
+
+    bool spearLargeActive;
 
     TileMap* mapWalls, * mapPlatforms;
     const std::vector<MovingPlatform*>* movingPlatforms; // Nueva referencia

@@ -67,6 +67,11 @@ void PowerUp::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
         sprite->addKeyframe(0, glm::vec2(0.0f, 0.0f)); // Coordenadas iniciales
         sprite->changeAnimation(0);
     }
+	else if (type == LARGE_SPEAR) {
+		spritesheet.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
+		size = glm::ivec2(16, 16);
+		setFloatingType(false, false);
+	}
     else { // GOURD
         spritesheet.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
         size = glm::ivec2(16, 16);
@@ -100,6 +105,9 @@ void PowerUp::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
     else if (type == DEERSKIN_SHIRT) {
         sprite->addKeyframe(0, glm::vec2(0.5f, 0.50f)); // Deerskin Shirt (ajusta coordenadas)
     }
+	else if (type == LARGE_SPEAR) {
+		sprite->addKeyframe(0, glm::vec2(0.f, 0.75f)); // Lanza grande 
+	}
     else { // GOURD
         sprite->addKeyframe(0, glm::vec2(0.75f, 0.5f)); // Calabaza
     }

@@ -13,7 +13,8 @@ enum PowerUpType {
     BUFFALO_HELMET,
     DEERSKIN_SHIRT,
     GOURD,
-    TOTEM_BOSS
+    TOTEM_BOSS,
+    LARGE_SPEAR
 };
 
 

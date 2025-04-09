@@ -34,7 +34,7 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	deerskinShirtActive = false;
 	jumpingIce = false;
 	deerskinTimer = 0.0f;
-
+	spearLargeActive = false;
 	godModeActive = false;
 	godModeKeyPressed = false;
 	recoverLivesKeyPressed = false;
@@ -154,9 +154,6 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.25f));
-	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.5f));
-	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.f, 0.75f));
-	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.5f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
@@ -179,9 +176,7 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
-	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
-	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.5f));
-	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.5f));
+	
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
@@ -473,14 +468,14 @@ void Player::update(int deltaTime)
 
 					// Solo permitir ataque hacia abajo con la lanza, no con el totem
 					if (currentWeapon == SPEAR) {
-						if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-							sprite_lanza->changeAnimation(THROW_LEFT);
+						if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && !first_attack) {
+							sprite_lanza->changeAnimation(spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT);
 						}
-						else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+						else if ((sprite_lanza->animation() == THROW_LEFT || sprite_lanza->animation() == THROW_LEFT_LARGE) && sprite_lanza->isAnimationFinished()) {
 							first_attack = true;
 							sprite_lanza->changeAnimation(STANDS_LEFT);
 						}
-						else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+						else if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && sprite_lanza->animation() != STANDS_LEFT) {
 							sprite_lanza->changeAnimation(STANDS_LEFT);
 						}
 						sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
@@ -502,14 +497,14 @@ void Player::update(int deltaTime)
 
 					// Solo permitir ataque hacia abajo con la lanza, no con el totem
 					if (currentWeapon == SPEAR) {
-						if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-							sprite_lanza->changeAnimation(THROW_RIGHT);
+						if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && !first_attack) {
+							sprite_lanza->changeAnimation(spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT);
 						}
-						else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+						else if ((sprite_lanza->animation() == THROW_RIGHT || sprite_lanza->animation() == THROW_RIGHT_LARGE) && sprite_lanza->isAnimationFinished()) {
 							first_attack = true;
 							sprite_lanza->changeAnimation(STANDS_RIGHT);
 						}
-						else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+						else if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && sprite_lanza->animation() != STANDS_RIGHT) {
 							first_attack = true;
 							sprite_lanza->changeAnimation(STANDS_RIGHT);
 						}
@@ -556,14 +551,14 @@ void Player::update(int deltaTime)
 					sprite->changeAnimation(ATTACK_LEFT_MOVING);
 
 				if (currentWeapon == SPEAR) {
-					if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-						sprite_lanza->changeAnimation(THROW_LEFT);
+					if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && !first_attack) {
+						sprite_lanza->changeAnimation(spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT);
 					}
-					else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+					else if ((sprite_lanza->animation() == THROW_LEFT || sprite_lanza->animation() == THROW_LEFT_LARGE) && sprite_lanza->isAnimationFinished()) {
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_LEFT);
 					}
-					else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+					else if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && sprite_lanza->animation() != STANDS_LEFT) {
 						sprite_lanza->changeAnimation(STANDS_LEFT);
 					}
 					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
@@ -608,14 +603,14 @@ void Player::update(int deltaTime)
 					sprite->changeAnimation(ATTACK_RIGHT_MOVING);
 
 				if (currentWeapon == SPEAR) {
-					if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-						sprite_lanza->changeAnimation(THROW_RIGHT);
+					if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && !first_attack) {
+						sprite_lanza->changeAnimation(spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT);
 					}
-					else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+					else if ((sprite_lanza->animation() == THROW_RIGHT || sprite_lanza->animation() == THROW_RIGHT_LARGE) && sprite_lanza->isAnimationFinished()) {
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_RIGHT);
 					}
-					else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+					else if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && sprite_lanza->animation() != STANDS_RIGHT) {
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_RIGHT);
 					}
@@ -659,11 +654,14 @@ void Player::update(int deltaTime)
 				if (sprite->animation() != ATTACK_LEFT) sprite->changeAnimation(ATTACK_LEFT);
 
 				if (currentWeapon == SPEAR) {
-					if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-						sprite_lanza->changeAnimation(THROW_LEFT);
+					if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && !first_attack) {
+						sprite_lanza->changeAnimation(spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT);
 					}
-					else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+					else if ((sprite_lanza->animation() == THROW_LEFT || sprite_lanza->animation() == THROW_LEFT_LARGE) && sprite_lanza->isAnimationFinished()) {
 						first_attack = true;
+						sprite_lanza->changeAnimation(STANDS_LEFT);
+					}
+					else if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && sprite_lanza->animation() != STANDS_LEFT) {
 						sprite_lanza->changeAnimation(STANDS_LEFT);
 					}
 					sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 43), float(tileMapDispl.y + posPlayer.y + 10 + 1)));
@@ -683,10 +681,14 @@ void Player::update(int deltaTime)
 				if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
 
 				if (currentWeapon == SPEAR) {
-					if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-						sprite_lanza->changeAnimation(THROW_RIGHT);
+					if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && !first_attack) {
+						sprite_lanza->changeAnimation(spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT);
 					}
-					else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+					else if ((sprite_lanza->animation() == THROW_RIGHT || sprite_lanza->animation() == THROW_RIGHT_LARGE) && sprite_lanza->isAnimationFinished()) {
+						first_attack = true;
+						sprite_lanza->changeAnimation(STANDS_RIGHT);
+					}
+					else if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && sprite_lanza->animation() != STANDS_RIGHT) {
 						first_attack = true;
 						sprite_lanza->changeAnimation(STANDS_RIGHT);
 					}
@@ -779,14 +781,14 @@ void Player::update(int deltaTime)
 							spear_visible = true;
 
 							if (currentWeapon == SPEAR) {
-								if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-									sprite_lanza->changeAnimation(THROW_LEFT);
+								if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && !first_attack) {
+									sprite_lanza->changeAnimation(spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT);
 								}
-								else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+								else if ((sprite_lanza->animation() == THROW_LEFT || sprite_lanza->animation() == THROW_LEFT_LARGE) && sprite_lanza->isAnimationFinished()) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_LEFT);
 								}
-								else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+								else if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && sprite_lanza->animation() != STANDS_LEFT) {
 									sprite_lanza->changeAnimation(STANDS_LEFT);
 								}
 								sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
@@ -807,14 +809,14 @@ void Player::update(int deltaTime)
 							spear_visible = true;
 
 							if (currentWeapon == SPEAR) {
-								if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-									sprite_lanza->changeAnimation(THROW_RIGHT);
+								if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && !first_attack) {
+									sprite_lanza->changeAnimation(spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT);
 								}
-								else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+								else if ((sprite_lanza->animation() == THROW_RIGHT || sprite_lanza->animation() == THROW_RIGHT_LARGE) && sprite_lanza->isAnimationFinished()) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_RIGHT);
 								}
-								else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+								else if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && sprite_lanza->animation() != STANDS_RIGHT) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_RIGHT);
 								}
@@ -957,14 +959,14 @@ void Player::update(int deltaTime)
 							spear_visible = true;
 
 							if (currentWeapon == SPEAR) {
-								if (sprite_lanza->animation() != THROW_LEFT && !first_attack) {
-									sprite_lanza->changeAnimation(THROW_LEFT);
+								if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && !first_attack) {
+									sprite_lanza->changeAnimation(spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT);
 								}
-								else if (sprite_lanza->animation() == THROW_LEFT && sprite_lanza->isAnimationFinished()) {
+								else if ((sprite_lanza->animation() == THROW_LEFT || sprite_lanza->animation() == THROW_LEFT_LARGE) && sprite_lanza->isAnimationFinished()) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_LEFT);
 								}
-								else if (sprite_lanza->animation() != THROW_LEFT && sprite_lanza->animation() != STANDS_LEFT) {
+								else if (sprite_lanza->animation() != (spearLargeActive ? THROW_LEFT_LARGE : THROW_LEFT) && sprite_lanza->animation() != STANDS_LEFT) {
 									sprite_lanza->changeAnimation(STANDS_LEFT);
 								}
 								sprite_lanza->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x - 44), float(tileMapDispl.y + posPlayer.y + 18 + 1)));
@@ -985,14 +987,14 @@ void Player::update(int deltaTime)
 							spear_visible = true;
 
 							if (currentWeapon == SPEAR) {
-								if (sprite_lanza->animation() != THROW_RIGHT && !first_attack) {
-									sprite_lanza->changeAnimation(THROW_RIGHT);
+								if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && !first_attack) {
+									sprite_lanza->changeAnimation(spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT);
 								}
-								else if (sprite_lanza->animation() == THROW_RIGHT && sprite_lanza->isAnimationFinished()) {
+								else if ((sprite_lanza->animation() == THROW_RIGHT || sprite_lanza->animation() == THROW_RIGHT_LARGE) && sprite_lanza->isAnimationFinished()) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_RIGHT);
 								}
-								else if (sprite_lanza->animation() != THROW_RIGHT && sprite_lanza->animation() != STANDS_RIGHT) {
+								else if (sprite_lanza->animation() != (spearLargeActive ? THROW_RIGHT_LARGE : THROW_RIGHT) && sprite_lanza->animation() != STANDS_RIGHT) {
 									first_attack = true;
 									sprite_lanza->changeAnimation(STANDS_RIGHT);
 								}
@@ -1210,8 +1212,33 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 	if (dir == LEFT) {
 		if (sprite->animation() == ATTACK_DOWN_LEFT) {
 			// Arma apuntando hacia abajo izquierda
-			if (currentWeapon == SPEAR && currentWeaponAnim == THROW_LEFT) {
+			if (currentWeapon == SPEAR && currentWeaponAnim == THROW_LEFT ) {
 				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
+					break;
+				case 1:
+					weaponTipPos = glm::ivec2(posPlayer.x - 30 + 30, posPlayer.y + 18);
+					break;
+				case 2:
+					weaponTipPos = glm::ivec2(posPlayer.x - 35 + 30, posPlayer.y + 18);
+					break;
+				case 3: // Retracción
+					weaponTipPos = glm::ivec2(posPlayer.x - 35 + 30, posPlayer.y + 18);
+					break;
+				case 4: // Retracción
+					weaponTipPos = glm::ivec2(posPlayer.x - 30 + 30, posPlayer.y + 18);
+					break;
+				case 5: // Retracción final
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
+					break;
+				default:
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
+					break;
+				}
+			}
+			else if (currentWeaponAnim == THROW_LEFT_LARGE) {
 				switch (currentKeyframe) {
 				case 0: // Inicio
 					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
@@ -1259,6 +1286,32 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 		else if (sprite->animation() == ATTACK_LEFT || sprite->animation() == ATTACK_LEFT_MOVING) {
 			// Arma horizontal hacia la izquierda
 			if (currentWeapon == SPEAR && currentWeaponAnim == THROW_LEFT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
+					break;
+				case 1: // Lanza extendiéndose
+					weaponTipPos = glm::ivec2(posPlayer.x - 38 + 30, posPlayer.y + 10);
+					break;
+				case 2: // Lanza extendiéndose más
+					weaponTipPos = glm::ivec2(posPlayer.x - 44 + 30, posPlayer.y + 10);
+					break;
+				case 3: // Retracción más
+					weaponTipPos = glm::ivec2(posPlayer.x - 44 + 30, posPlayer.y + 10);
+					break;
+				case 4: // Retracción más
+					weaponTipPos = glm::ivec2(posPlayer.x - 38 + 30, posPlayer.y + 10);
+					break;
+				case 5: // Retracción final
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
+					break;
+				default:
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
+					break;
+				}
+			}
+			else if (currentWeapon == SPEAR && currentWeaponAnim == THROW_LEFT_LARGE) {
 				// La posición varía según el keyframe de la animación
 				switch (currentKeyframe) {
 				case 0: // Inicio
@@ -1348,6 +1401,33 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 				case 2:
 					weaponTipPos = glm::ivec2(posPlayer.x + 35, posPlayer.y + 18);
 					break;
+				
+				case 3: // Retracción
+					weaponTipPos = glm::ivec2(posPlayer.x + 35, posPlayer.y + 18);
+					break;
+				case 4: // Retracción
+					weaponTipPos = glm::ivec2(posPlayer.x + 30, posPlayer.y + 18);
+					break;
+				case 5: // Retracción final
+					weaponTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				default:
+					weaponTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				}
+			}
+			else if (currentWeapon == SPEAR && currentWeaponAnim == THROW_RIGHT_LARGE) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					weaponTipPos = glm::ivec2(posPlayer.x + 28, posPlayer.y + 18);
+					break;
+				case 1:
+					weaponTipPos = glm::ivec2(posPlayer.x + 30, posPlayer.y + 18);
+					break;
+				case 2:
+					weaponTipPos = glm::ivec2(posPlayer.x + 35, posPlayer.y + 18);
+					break;
 				case 3: // Lanza extendida hacia abajo
 					weaponTipPos = glm::ivec2(posPlayer.x + 40, posPlayer.y + 18);
 					break;
@@ -1385,6 +1465,32 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 		else if (sprite->animation() == ATTACK_RIGHT || sprite->animation() == ATTACK_RIGHT_MOVING) {
 			// Arma horizontal hacia la derecha
 			if (currentWeapon == SPEAR && currentWeaponAnim == THROW_RIGHT) {
+				// La posición varía según el keyframe de la animación
+				switch (currentKeyframe) {
+				case 0: // Inicio
+					weaponTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				case 1: // Lanza extendiéndose
+					weaponTipPos = glm::ivec2(posPlayer.x + 38, posPlayer.y + 10);
+					break;
+				case 2: // Lanza extendiéndose más
+					weaponTipPos = glm::ivec2(posPlayer.x + 44, posPlayer.y + 10);
+					break;
+				case 3: // Retracción más
+					weaponTipPos = glm::ivec2(posPlayer.x + 44, posPlayer.y + 10);
+					break;
+				case 4: // Retracción más
+					weaponTipPos = glm::ivec2(posPlayer.x + 38, posPlayer.y + 10);
+					break;
+				case 5: // Retracción final
+					weaponTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				default:
+					weaponTipPos = glm::ivec2(posPlayer.x + 32, posPlayer.y + 10);
+					break;
+				}
+			}
+			else if (currentWeapon == SPEAR && currentWeaponAnim == THROW_RIGHT_LARGE) {
 				// La posición varía según el keyframe de la animación
 				switch (currentKeyframe) {
 				case 0: // Inicio
@@ -1584,4 +1690,9 @@ void Player::decrementFlintSpearHits() {
 	if (flintSpearHits > 0 && currentWeapon == SPEAR) {
 		flintSpearHits--;
 	}
+}
+
+void Player::activateSpearLarge(bool activate)
+{
+	spearLargeActive = activate;
 }

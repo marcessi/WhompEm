@@ -1114,6 +1114,9 @@ void Scene::updatePowerUps(int deltaTime)
             case DEERSKIN_SHIRT:
                 player->collectDeerskinShirt();
                 break;
+			case LARGE_SPEAR:
+				if(!player->isSpearLargeActive())player->activateSpearLarge(true);
+				break;
             }
 
             // Desactivar el power-up recogido
@@ -1620,7 +1623,8 @@ PowerUpType Scene::getRandomPowerUpType()
         FLINT_SPEAR,     // Lanza de pedernal - menos común
         BUFFALO_HELMET,  // Casco de búfalo - menos común
         DEERSKIN_SHIRT,  // Camisa de piel de ciervo - rara
-        LARGE_HEART      // Corazón grande - raro
+        LARGE_HEART,      // Corazón grande - raro
+        LARGE_SPEAR
     };
 
     // Seleccionar un índice aleatorio
