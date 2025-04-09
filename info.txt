@@ -39,6 +39,8 @@ Pantalles:
 -pantalla final de victoria
 -pantalla final de gameover
 
+Mapa: hem escogit sacred woods
+
 HUD: mostra les vides en froma de cor, les pocions màgiques que li queden, la arma que està usant, i els power-ups a la part d'abaic de helmet, flint i deerskin shirt
 
 Instruccions:
