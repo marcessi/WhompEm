@@ -8,12 +8,14 @@
 enum PowerUpType {
     SMALL_HEART,
     LARGE_HEART,
-    GOURD,
     MAGIC_POTION,
-    FLINT_SPEAR,   // Flint Spear Head - Aumenta poder de ataque por 4 golpes
-    BUFFALO_HELMET, // Buffalo Headdress - Aumenta defensa por 4 golpes
-    DEERSKIN_SHIRT
+    FLINT_SPEAR,
+    BUFFALO_HELMET,
+    DEERSKIN_SHIRT,
+    GOURD,
+    TOTEM_BOSS
 };
+
 
 class PowerUp
 {
@@ -30,7 +32,7 @@ public:
     void setFloatingType(bool floating, bool upwards = false);
 
     
-    PowerUpType getType() const;
+	PowerUpType getType() const { return type; }
     glm::ivec2 getPosition() const { return position; }
     glm::ivec2 getSize() const { return size; }
     bool isActive() const;

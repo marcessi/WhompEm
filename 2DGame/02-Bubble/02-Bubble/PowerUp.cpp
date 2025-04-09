@@ -57,41 +57,55 @@ void PowerUp::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
         size = glm::ivec2(16, 16);
         setFloatingType(true, false);
     }
+    else if (type == TOTEM_BOSS) {
+        spritesheet.loadFromFile("images/totem_boss.png", TEXTURE_PIXEL_FORMAT_RGBA);
+        size = glm::ivec2(16, 16); // Ajusta el tamaño según la imagen
+        setFloatingType(false, false); // No flota
+        sprite = Sprite::createSprite(size, glm::vec2(1.0f, 1.0f), &spritesheet, &shaderProgram);
+        sprite->setNumberAnimations(1);
+        sprite->setAnimationSpeed(0, 8);
+        sprite->addKeyframe(0, glm::vec2(0.0f, 0.0f)); // Coordenadas iniciales
+        sprite->changeAnimation(0);
+    }
     else { // GOURD
         spritesheet.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
         size = glm::ivec2(16, 16);
         setFloatingType(true, false);
     }
 
+    if (type != TOTEM_BOSS) {
+        // Cargar la textura de HUD para los demás tipos
+
     // Crear el sprite con las dimensiones correctas
-    sprite = Sprite::createSprite(size, glm::vec2(0.25f, 0.5f), &spritesheet, &shaderProgram);
+        sprite = Sprite::createSprite(size, glm::vec2(0.25f, 0.5f), &spritesheet, &shaderProgram);
 
-    // Configurar animación simple
-    sprite->setNumberAnimations(1);
-    sprite->setAnimationSpeed(0, 8);
-    if (type == SMALL_HEART) {
-        sprite->addKeyframe(0, glm::vec2(0.0f, 0.5f)); // Corazón pequeño
-    }
-    else if (type == LARGE_HEART) {
-        sprite->addKeyframe(0, glm::vec2(0.25f, 0.5f)); // Corazón grande
-    }
-    else if (type == MAGIC_POTION) {
-        sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Poción mágica
-    }
-    else if (type == FLINT_SPEAR) {
-        sprite->addKeyframe(0, glm::vec2(0.25f, 0.0f)); // Flint Spear Head (ajusta coordenadas)
-    }
-    else if (type == BUFFALO_HELMET) {
-        sprite->addKeyframe(0, glm::vec2(0.50f, 0.0f)); // Buffalo Helmet (ajusta coordenadas)
-    }
-    else if (type == DEERSKIN_SHIRT) {
-        sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Deerskin Shirt (ajusta coordenadas)
-    }
-    else { // GOURD
-        sprite->addKeyframe(0, glm::vec2(0.5f, 0.5f)); // Calabaza
-    }
+        // Configurar animación simple
+        sprite->setNumberAnimations(1);
+        sprite->setAnimationSpeed(0, 8);
+        if (type == SMALL_HEART) {
+            sprite->addKeyframe(0, glm::vec2(0.0f, 0.5f)); // Corazón pequeño
+        }
+        else if (type == LARGE_HEART) {
+            sprite->addKeyframe(0, glm::vec2(0.25f, 0.5f)); // Corazón grande
+        }
+        else if (type == MAGIC_POTION) {
+            sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Poción mágica
+        }
+        else if (type == FLINT_SPEAR) {
+            sprite->addKeyframe(0, glm::vec2(0.25f, 0.0f)); // Flint Spear Head (ajusta coordenadas)
+        }
+        else if (type == BUFFALO_HELMET) {
+            sprite->addKeyframe(0, glm::vec2(0.50f, 0.0f)); // Buffalo Helmet (ajusta coordenadas)
+        }
+        else if (type == DEERSKIN_SHIRT) {
+            sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Deerskin Shirt (ajusta coordenadas)
+        }
+        else { // GOURD
+            sprite->addKeyframe(0, glm::vec2(0.5f, 0.5f)); // Calabaza
+        }
 
-    sprite->changeAnimation(0);
+        sprite->changeAnimation(0);
+    }
 }
 
 
@@ -193,6 +207,7 @@ bool PowerUp::collisionWithPlayer(const glm::ivec2& playerPos, const glm::ivec2&
     // Si la distancia es menor que la suma de mitades, hay colisión
     return (distX < halfWidth && distY < halfHeight);
 }
+
 bool PowerUp::isActive() const
 {
     return active;
@@ -201,9 +216,4 @@ bool PowerUp::isActive() const
 void PowerUp::deactivate()
 {
     active = false;
-}
-
-PowerUpType PowerUp::getType() const
-{
-    return type;
 }

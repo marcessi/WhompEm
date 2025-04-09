@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 205 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 33 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
 
@@ -940,6 +940,12 @@ void Scene::updatePowerUps(int deltaTime)
         // Actualizar el power-up
         powerUp->update(deltaTime);
 
+		if (powerUp->getType() == TOTEM_BOSS && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
+			setBossDefeated();
+			powerUp->deactivate();
+            return;
+		}
+
         // Comprobar colisión con el jugador
         if (powerUp->isActive() && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
             // Aplicar el efecto del power-up según su tipo
@@ -1418,18 +1424,11 @@ void Scene::updateBoss(int deltaTime)
         // Si el boss muere, generar un power-up importante
         if (!boss->isAlive()) {
             // Generar power-up de tipo grande
-            spawnPowerUp(glm::vec2(bossPos.x + 32, bossPos.y + 32), LARGE_HEART);
+            spawnPowerUp(glm::vec2(bossPos.x + 32, bossPos.y + 32), TOTEM_BOSS);
 
             // Eliminar el boss
             delete boss;
             boss = nullptr;
-
-            // Cambiar la música de vuelta a la normal
-            audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
-
-            // Cambiar a modo de cámara normal
-            bossCam = false;
-            currentCheckpoint = 4; // Volver al checkpoint anterior
         }
     }
 }
