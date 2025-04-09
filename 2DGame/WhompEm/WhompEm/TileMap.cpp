@@ -154,35 +154,70 @@ void TileMap::prepareArrays(const glm::vec2 &minCoords, ShaderProgram &program)
 // Method collisionMoveDown also corrects Y coordinate if the box is
 // already intersecting a tile below.
 
-bool TileMap::collisionMoveLeft(const glm::ivec2 &pos, const glm::ivec2 &size) const
+bool TileMap::collisionMoveLeft(const glm::ivec2& pos, const glm::ivec2& size) const
 {
+	// Validar que el puntero map no sea nulo
+	if (map == nullptr) {
+		cerr << "Error: TileMap::map es nulo. Asegúrate de que loadLevel() se haya llamado correctamente." << endl;
+		return false;
+	}
+
 	int x, y0, y1;
-	
+
 	x = pos.x / tileSize;
 	y0 = pos.y / tileSize;
 	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
+
+	// Validar que los índices estén dentro de los límites
+	if (x < 0 || x >= mapSize.x) {
+		cerr << "Error: X fuera de los límites en collisionMoveLeft. X = " << x << endl;
+		return false;
+	}
+
+	for (int y = y0; y <= y1; y++) {
+		if (y < 0 || y >= mapSize.y) {
+			cerr << "Error: Y fuera de los límites en collisionMoveLeft. Y = " << y << endl;
+			continue;
+		}
+
+		if (map[y * mapSize.x + x] != 0)
 			return true;
 	}
-	
+
 	return false;
 }
 
-bool TileMap::collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) const
+
+bool TileMap::collisionMoveRight(const glm::ivec2& pos, const glm::ivec2& size) const
 {
+	// Validar que el puntero map no sea nulo
+	if (map == nullptr) {
+		cerr << "Error: TileMap::map es nulo. Asegúrate de que loadLevel() se haya llamado correctamente." << endl;
+		return false;
+	}
+
 	int x, y0, y1;
-	
+
 	x = (pos.x + size.x - 1) / tileSize;
 	y0 = pos.y / tileSize;
 	y1 = (pos.y + size.y - 1) / tileSize;
-	for(int y=y0; y<=y1; y++)
-	{
-		if(map[y*mapSize.x+x] != 0)
+
+	// Validar que los índices estén dentro de los límites
+	if (x < 0 || x >= mapSize.x) {
+		cerr << "Error: X fuera de los límites en collisionMoveRight. X = " << x << endl;
+		return false;
+	}
+
+	for (int y = y0; y <= y1; y++) {
+		if (y < 0 || y >= mapSize.y) {
+			cerr << "Error: Y fuera de los límites en collisionMoveRight. Y = " << y << endl;
+			continue;
+		}
+
+		if (map[y * mapSize.x + x] != 0)
 			return true;
 	}
-	
+
 	return false;
 }
 

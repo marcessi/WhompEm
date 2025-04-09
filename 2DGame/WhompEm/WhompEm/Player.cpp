@@ -1177,44 +1177,44 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 				// La posición varía según el keyframe de la animación
 				switch (currentKeyframe) {
 				case 0: // Inicio
-					weaponTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
 					break;
 				case 1:
-					weaponTipPos = glm::ivec2(posPlayer.x - 30, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 30 + 30, posPlayer.y + 18);
 					break;
 				case 2:
-					weaponTipPos = glm::ivec2(posPlayer.x - 35, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 35 + 30, posPlayer.y + 18);
 					break;
 				case 3: // Lanza extendida hacia abajo
-					weaponTipPos = glm::ivec2(posPlayer.x - 40, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 40 + 30, posPlayer.y + 18);
 					break;
 				case 4: // Lanza en posición máxima
-					weaponTipPos = glm::ivec2(posPlayer.x - 46, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 46 + 30, posPlayer.y + 18);
 					break;
 				case 5:
-					weaponTipPos = glm::ivec2(posPlayer.x - 40, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 40 + 30, posPlayer.y + 18);
 					break;
 				case 6: // Retracción
-					weaponTipPos = glm::ivec2(posPlayer.x - 35, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 35 + 30, posPlayer.y + 18);
 					break;
 				case 7: // Retracción
-					weaponTipPos = glm::ivec2(posPlayer.x - 30, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 30 + 30, posPlayer.y + 18);
 					break;
 				case 8: // Retracción final
-					weaponTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
 					break;
 				default:
-					weaponTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 18);
+					weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 18);
 					break;
 				}
 			}
 			else if (currentWeapon == SPEAR && currentWeaponAnim == STANDS_LEFT) {
 				// Lanza en posición sostenida
-				weaponTipPos = glm::ivec2(posPlayer.x - 28, posPlayer.y + 26);
+				weaponTipPos = glm::ivec2(posPlayer.x - 28 + 30, posPlayer.y + 26);
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19, posPlayer.y + 18);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 18);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
@@ -1225,44 +1225,44 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 				// La posición varía según el keyframe de la animación
 				switch (currentKeyframe) {
 				case 0: // Inicio
-					weaponTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
 					break;
 				case 1: // Lanza extendiéndose
-					weaponTipPos = glm::ivec2(posPlayer.x - 38, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 38 + 30, posPlayer.y + 10);
 					break;
 				case 2: // Lanza extendiéndose más
-					weaponTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 44 + 30, posPlayer.y + 10);
 					break;
 				case 3: // Lanza extendiéndose más
-					weaponTipPos = glm::ivec2(posPlayer.x - 50, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 50 + 30, posPlayer.y + 10);
 					break;
 				case 4: // Lanza en posición máxima
-					weaponTipPos = glm::ivec2(posPlayer.x - 56, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 56 + 30, posPlayer.y + 10);
 					break;
 				case 5: // Retracción
-					weaponTipPos = glm::ivec2(posPlayer.x - 50, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 50 + 30, posPlayer.y + 10);
 					break;
 				case 6: // Retracción más
-					weaponTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 44 + 30, posPlayer.y + 10);
 					break;
 				case 7: // Retracción más
-					weaponTipPos = glm::ivec2(posPlayer.x - 38, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 38 + 30, posPlayer.y + 10);
 					break;
 				case 8: // Retracción final
-					weaponTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
 					break;
 				default:
-					weaponTipPos = glm::ivec2(posPlayer.x - 32, posPlayer.y + 10);
+					weaponTipPos = glm::ivec2(posPlayer.x - 32 + 30, posPlayer.y + 10);
 					break;
 				}
 			}
 			else if (currentWeapon == SPEAR && currentWeaponAnim == STANDS_LEFT) {
 				// Lanza en posición sostenida
-				weaponTipPos = glm::ivec2(posPlayer.x - 44, posPlayer.y + 10);
+				weaponTipPos = glm::ivec2(posPlayer.x - 44 + 30, posPlayer.y + 10);
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19, posPlayer.y + 10);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
@@ -1271,12 +1271,12 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			// Arma apuntando hacia arriba izquierda
 			if (currentWeapon == SPEAR && currentWeaponAnim == UP) {
 				// Posición fija para la punta de la lanza hacia arriba
-				weaponTipPos = glm::ivec2(posPlayer.x - 16, posPlayer.y - 18);
+				weaponTipPos = glm::ivec2(posPlayer.x - 16 + 30, posPlayer.y - 18);
 				validAttackAnimation = true;
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19, posPlayer.y + 10);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
@@ -1285,12 +1285,12 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			// Arma apuntando hacia abajo izquierda en caída
 			if (currentWeapon == SPEAR && currentWeaponAnim == DOWN) {
 				// Posición fija para la punta de la lanza hacia abajo en caída
-				weaponTipPos = glm::ivec2(posPlayer.x - 20, posPlayer.y + 42);
+				weaponTipPos = glm::ivec2(posPlayer.x - 20 + 30, posPlayer.y + 42);
 				validAttackAnimation = true;
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19, posPlayer.y + 10);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
@@ -1446,7 +1446,6 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 
 	bool collision = collisionX && collisionY;
 
-	
 	return collision;
 }
 
