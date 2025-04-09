@@ -513,11 +513,17 @@ void Player::update(int deltaTime)
 			else if (Game::instance().getKey(GLFW_KEY_RIGHT)) {
 				dir = RIGHT;
 			}
-				if (dir == LEFT)
-					sprite->changeAnimation(PROTECT_LEFT);
-				else if (dir == RIGHT)
-					sprite->changeAnimation(PROTECT_RIGHT);
+			if (dir == LEFT) {
+				sprite->changeAnimation(PROTECT_LEFT);
+				sprite_lanza->changeAnimation(STANDS_LEFT);
+				sprite_ice_totem->changeAnimation(STANDS_LEFT);
 			}
+			else if (dir == RIGHT) {
+				sprite->changeAnimation(PROTECT_RIGHT);
+				sprite_lanza->changeAnimation(STANDS_RIGHT);
+				sprite_ice_totem->changeAnimation(STANDS_RIGHT);
+			}
+		}
 		// Manejar el movimiento horizontal
 		else if (Game::instance().getKey(GLFW_KEY_LEFT))
 		{
@@ -565,7 +571,10 @@ void Player::update(int deltaTime)
 				glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x < leftLimit)
 			{
 				posPlayer.x = prevPos.x;
-				sprite->changeAnimation(STAND_LEFT);
+				if (Game::instance().getKey(GLFW_KEY_X)) {
+					if (sprite->animation() != ATTACK_LEFT) sprite->changeAnimation(ATTACK_LEFT);
+				}
+				else sprite->changeAnimation(STAND_LEFT);
 			}
 		}
 		else if (Game::instance().getKey(GLFW_KEY_RIGHT))
@@ -615,7 +624,10 @@ void Player::update(int deltaTime)
 				glm::ivec2(hitboxWidth, hitboxHeight)) || posPlayer.x > 4064.f)
 			{
 				posPlayer.x = prevPos.x;
-				sprite->changeAnimation(STAND_RIGHT);
+				if (Game::instance().getKey(GLFW_KEY_X)) {
+					if (sprite->animation() != ATTACK_RIGHT) sprite->changeAnimation(ATTACK_RIGHT);
+				}
+				else sprite->changeAnimation(STAND_RIGHT);
 			}
 		}
 		else if (Game::instance().getKey(GLFW_KEY_X))
@@ -1214,7 +1226,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 18);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 6, posPlayer.y + 18);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
@@ -1262,7 +1274,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			}
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
-				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
+				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 6, posPlayer.y + 10);
 				weaponTipSize = glm::ivec2(8, 8); // Área de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
