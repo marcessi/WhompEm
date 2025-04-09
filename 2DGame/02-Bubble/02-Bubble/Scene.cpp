@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 205 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 33 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
 
@@ -372,6 +372,7 @@ void Scene::initSounds() {
     // Nuevos sonidos para game over y victoria
     audioManager.loadSound("game_over", "sounds/game_over.mp3");
     audioManager.loadSound("victory", "sounds/victory.mp3");
+	audioManager.loadSound("boss_death", "sounds/boss_death.mp3");
 }
 
 void Scene::resetGame()
@@ -379,7 +380,14 @@ void Scene::resetGame()
     // Reiniciar estado del juego
     gameState = MENU_MAIN;
     currentOption = OPTION_START_GAME;
+    delete boss;
+	boss = nullptr;
+    if (hud != nullptr) {
+        hud->showBossHealthBar(false);
+    }
     bossDefeated = false;
+    bossCam = false;
+	bossSpawned = false;
     menuTime = 0.0f;
     currentTime = 0.0f;
 
@@ -1447,7 +1455,7 @@ void Scene::updateBoss(int deltaTime)
 
             // Cambiar la música de vuelta a la normal
             audioManager.stopMusic();
-			audioManager.playSound("boss_defeated", 0.6f);
+			audioManager.playSound("boss_death", 0.6f);
 
             if (hud != nullptr) {
                 hud->showBossHealthBar(false);
