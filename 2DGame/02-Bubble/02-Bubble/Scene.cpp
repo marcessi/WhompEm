@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
 
@@ -847,7 +847,13 @@ void Scene::updateOrcos(int deltaTime)
                 orco->freeze();
             }
             else {
-                orco->hit();
+                if (player->getFlintSpearHits() > 0) {
+                    orco->hitWithFlint();  // Usar el nuevo método
+                }
+                else {
+                    orco->hit();  // Daño normal
+                }
+                player->decrementFlintSpearHits();
             }
         }
 
@@ -861,11 +867,11 @@ void Scene::updateOrcos(int deltaTime)
             
             // Generar power-up con probabilidad
             int randomVal = rand() % 100;
-            if (randomVal < 100) { // 40% de probabilidad total
-                PowerUpType type;
-				type = FLINT_SPEAR; // Cambia esto para el tipo de power-up deseado
-                // Generar el power-up en la posición del orco
-                spawnPowerUp(glm::vec2(orcoPos.x, orcoPos.y + 16), type);
+            if (randomVal < 80) {
+                // Seleccionar un tipo de power-up aleatorio
+                PowerUpType type = getRandomPowerUpType();
+                // Generar el power-up ligeramente por encima del orco para evitar que se quede atascado en el suelo
+                spawnPowerUp(glm::vec2(orcoPos.x, orcoPos.y), type);
             }
         }
 
@@ -1000,11 +1006,11 @@ void Scene::spawnPowerUp(const glm::vec2& position, PowerUpType type)
 {
     PowerUp* powerUp = new PowerUp(type);
     powerUp->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-    if (type == SMALL_HEART) {
+    if (type == SMALL_HEART || type == LARGE_HEART) {
         powerUp->setFloatingType(true, true); // Flota hacia arriba
     }
     else {
-        powerUp->setFloatingType(true, false); // Flota en el sitio
+        powerUp->setFloatingType(false, false); // Flota en el sitio
     }
     powerUp->setPosition(position);
     powerUp->setTileMap(mapWalls, mapPlatforms);
@@ -1021,31 +1027,36 @@ void Scene::updateSnakes(int deltaTime)
     // Verificar si el jugador está en el rango para generar serpientes
     bool inSnakeZone = (posPlayer.x >= SNAKE_MIN_X && posPlayer.x <= SNAKE_MAX_X);
 
+    static bool lastSnakeWasLeft = false;
+
     // Generar nuevas serpientes solo si el jugador está en la zona
-    if (inSnakeZone && snakes.size() < 3) {
+    if (inSnakeZone && snakes.size() < 2) {
         snakeSpawnTimer += deltaTime;
 
         if (snakeSpawnTimer >= SNAKE_SPAWN_INTERVAL) {
             snakeSpawnTimer = 0.0f;
 
             // Determinar dirección basada en la posición del jugador
-            Snake::Direction snakeDir = Snake::LEFT;
-            if (posPlayer.x > (SNAKE_MIN_X + SNAKE_MAX_X) / 2) {
-                snakeDir = Snake::RIGHT;
-            }
-
-            // Calcular posición de generación (fuera de pantalla pero cerca)
+            Snake::Direction snakeDir;
             float spawnX;
-            if (snakeDir == Snake::LEFT) {
-                spawnX = camX + CAMERA_WIDTH + 32; 
+
+            // Si la última serpiente fue de izquierda, la próxima será de derecha y viceversa
+            if (!lastSnakeWasLeft) {
+                // Generar serpiente que viene desde la izquierda (dirección RIGHT)
+                snakeDir = Snake::RIGHT;
+                spawnX = camX - 32; // A la izquierda de la pantalla
+                lastSnakeWasLeft = true;
             }
             else {
-                spawnX = camX - 32; // A la izquierda de la pantalla
+                // Generar serpiente que viene desde la derecha (dirección LEFT)
+                snakeDir = Snake::LEFT;
+                spawnX = camX + CAMERA_WIDTH + 32; // A la derecha de la pantalla
+                lastSnakeWasLeft = false;
             }
 
             // Ajustar la altura para que esté cerca de la altura del jugador
             // pero no exactamente igual para agregar variedad
-            float spawnY = posPlayer.y;
+            float spawnY = posPlayer.y + 6;
 
             // Asegurarse de que no esté demasiado baja
             // Si el jugador está saltando, usar una altura base razonable
@@ -1082,8 +1093,14 @@ void Scene::updateSnakes(int deltaTime)
             }
             else {
                 // Eliminar la serpiente al ser golpeada por la lanza
+                int randomVal = rand() % 100;
+                if (randomVal < 90) {  // 35% de probabilidad (menor que los orcos)
+                    PowerUpType type = getRandomPowerUpType();
+                    spawnPowerUp(glm::vec2(snakePos.x, snakePos.y - 1), type);
+                }
                 delete snake;
                 snakes.erase(snakes.begin() + i);
+                player->decrementFlintSpearHits();
                 --i; // Ajustar el índice después de eliminar
             }
         }
@@ -1364,7 +1381,7 @@ void Scene::updateBoss(int deltaTime)
         // Posicionar el boss a una altura similar a la del suelo donde está el jugador
         // pero un poco a la derecha para que sea visible
         float floorY = 770.0f; // Altura aproximada del suelo en esta zona
-        boss->setPosition(glm::vec2(4000.f, posPlayer.y + 7.f)); // Restamos el tamaño del boss
+        boss->setPosition(glm::vec2(4000.f, posPlayer.y + 6.f)); // Restamos el tamaño del boss
         boss->setTileMap(mapWalls, mapPlatforms);
         boss->setPlayerPosition(&posPlayer);
 
@@ -1424,6 +1441,7 @@ void Scene::updateBoss(int deltaTime)
         glm::ivec2 bossSize = boss->getSize();
         if (player->checkSpearCollision(bossPos, bossSize)) {
             boss->hit();
+            player->decrementFlintSpearHits();
             if (hud != nullptr) {
                 std::pair<std::vector<int>, int> bossLives = boss->getLives();
                 hud->setBossHealth(bossLives.first);
@@ -1452,4 +1470,24 @@ void Scene::updateBoss(int deltaTime)
         }
        
     }
+}
+
+PowerUpType Scene::getRandomPowerUpType()
+{
+    // Array con todos los tipos posibles de power-ups
+    PowerUpType types[] = {
+        SMALL_HEART,     // Corazón pequeño - común
+        SMALL_HEART,     // Repetido para aumentar su probabilidad
+        GOURD,           // Calabaza - común
+        GOURD,           // Repetido para aumentar su probabilidad
+        MAGIC_POTION,    // Poción mágica - menos común
+        FLINT_SPEAR,     // Lanza de pedernal - menos común
+        BUFFALO_HELMET,  // Casco de búfalo - menos común
+        DEERSKIN_SHIRT,  // Camisa de piel de ciervo - rara
+        LARGE_HEART      // Corazón grande - raro
+    };
+
+    // Seleccionar un índice aleatorio
+    int index = rand() % (sizeof(types) / sizeof(types[0]));
+    return types[index];
 }

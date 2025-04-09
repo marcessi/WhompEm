@@ -39,6 +39,7 @@ public:
 
     glm::ivec2 getPosition();
     void setLeftLimit(float leftLimit);
+    void decrementFlintSpearHits();
     bool isJumping() const { return bJumping; }
     void isHitted();
     pair<std::vector<int>, int> getplayerLifes();

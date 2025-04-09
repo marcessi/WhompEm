@@ -22,6 +22,7 @@ public:
     void update(int deltaTime);
     void render();
 
+    void hitWithFlint();
     void setTileMap(TileMap* tileMapWalls, TileMap* tileMapPlatforms);
     void setPosition(const glm::vec2& pos);
     void setMovingPlatforms(const std::vector<MovingPlatform*>* platforms);

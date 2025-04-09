@@ -522,3 +522,22 @@ void Orco::kill()
 {
     alive = false;
 }
+
+void Orco::hitWithFlint()
+{
+    if (!alive || isHit)
+        return;
+
+    // Matar al orco inmediatamente
+    lives = 0;
+
+    // Iniciar el estado de golpeado
+    isHit = true;
+    hitTime = 0;
+
+    // Establecer alpha inicial para el efecto visual
+    sprite->setAlpha(0.5f);
+
+    alive = false; // Marcar como muerto inmediatamente
+    std::cout << "Orco muerto por Flint Spear" << std::endl;
+}

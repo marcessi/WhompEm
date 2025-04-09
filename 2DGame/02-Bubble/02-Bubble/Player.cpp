@@ -396,7 +396,7 @@ void Player::update(int deltaTime)
 	}
 
 	// Gestionar invulnerabilidad (parpadeo)
-	if (invulnerable) {
+	if (invulnerable && !deerskinShirtActive) {
 		invulnerableTimer += deltaTime;
 		sprite->setAlpha(0.8f);
 
@@ -1131,7 +1131,7 @@ void Player::isHitted() {
 		if (!heartDamaged) {
 			ligths--;
 
-			if (ligths <= 0) {
+			if (ligths < 0) {
 				gameover = true;
 			}
 			else {
@@ -1446,11 +1446,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 
 	bool collision = collisionX && collisionY;
 
-	// Si hay colisión y tiene Flint Spear, reducir contador
-	if (collision && flintSpearHits > 0 && currentWeapon == SPEAR) {
-		flintSpearHits--;
-	}
-
+	
 	return collision;
 }
 
@@ -1488,7 +1484,7 @@ void Player::increaseMaxHearts() {
 		maxHearts++;
 
 		// Añadir un nuevo corazón al vector
-		hearts.push_back(3); // Corazón lleno
+		hearts.insert(hearts.begin(), 3); // Corazón lleno
 
 
 	}
@@ -1531,7 +1527,7 @@ void Player::collectDeerskinShirt() {
 	deerskinShirtActive = true;
 	deerskinTimer = 0.0f;
 	invulnerable = true; // Activar invulnerabilidad
-
+	player_visible = false;
 
 }
 
@@ -1546,4 +1542,10 @@ int Player::getBuffaloHelmetHits() const {
 
 bool Player::hasDeerskinShirt() const {
 	return deerskinShirtActive;
+}
+
+void Player::decrementFlintSpearHits() {
+	if (flintSpearHits > 0 && currentWeapon == SPEAR) {
+		flintSpearHits--;
+	}
 }

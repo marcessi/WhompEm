@@ -78,6 +78,7 @@ private:
 
 	void updateMenu(int deltaTime);
 	void updateGameplay(int deltaTime);
+	PowerUpType getRandomPowerUpType();
 
 	void renderMenu();
 	void renderGameplay();
@@ -146,7 +147,7 @@ private:
 	const float SNAKE_MIN_X = 2450.0f;
 	const float SNAKE_MAX_X = 2950.0f;
 	float snakeSpawnTimer;
-	const float SNAKE_SPAWN_INTERVAL = 3000.0f;
+	const float SNAKE_SPAWN_INTERVAL = 2000.0f;
 
 	// Plataformas m�viles
 	std::vector<MovingPlatform*> movingPlatforms;

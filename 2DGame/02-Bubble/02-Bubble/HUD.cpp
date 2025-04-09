@@ -301,9 +301,9 @@ void HUD::updatePosition(float cameraX, float cameraY)
 
         hearts[i]->setPosition(glm::vec2(xPos, yPos));
     }
-    flintSpearIcon->setPosition(glm::vec2(cameraX + screenPos.x, cameraY + screenPos.y + 205));
-    buffaloHelmetIcon->setPosition(glm::vec2(cameraX + screenPos.x + 18, cameraY + screenPos.y + 205));
-    deerskinShirtIcon->setPosition(glm::vec2(cameraX + screenPos.x + 36, cameraY + screenPos.y + 205));
+    flintSpearIcon->setPosition(glm::vec2(cameraX + screenPos.x, cameraY + screenPos.y + 207));
+    buffaloHelmetIcon->setPosition(glm::vec2(cameraX + screenPos.x + 18, cameraY + screenPos.y + 207));
+    deerskinShirtIcon->setPosition(glm::vec2(cameraX + screenPos.x + 36, cameraY + screenPos.y + 207));
 
     for (int i = 0; i < 7; ++i) {
         int column = i / 6;     // 0 para primera columna, 1 para segunda columna

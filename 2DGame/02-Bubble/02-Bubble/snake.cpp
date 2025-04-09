@@ -131,7 +131,7 @@ void Snake::update(int deltaTime)
                 sprite->changeAnimation(MOVE_RIGHT);
         }
         else {
-            posSnake.y = int(startY - 20 * sin(3.14159f * jumpAngle / 180.f)); 
+            posSnake.y = int(startY - 10 * sin(3.14159f * jumpAngle / 180.f)); 
         }
     }
     else {
