@@ -1120,6 +1120,9 @@ void Player::isHitted() {
 
 	// Solo aplicar daño si el jugador no está en estado invulnerable
 	if (!invulnerable) {
+		if (audioManager != nullptr) {
+			audioManager->playSound("player_hit", 0.3f);
+		}
 		hitted = true;
 		invulnerable = true;
 		hitTimer = 0;

@@ -366,6 +366,8 @@ void Scene::initSounds() {
 
     // Cargar efectos de sonido
     audioManager.loadSound("jump", "sounds/jump1.mp3");
+	audioManager.loadSound("player_hit", "sounds/player_hit.mp3");
+	audioManager.loadSound("power-up", "sounds/collect_power-up.mp3");
     audioManager.loadSound("spear", "sounds/spear.mp3");
     audioManager.loadSound("ice_totem", "sounds/ice_totem.mp3");
     audioManager.loadSound("menu_move", "sounds/menu_move.mp3");
@@ -1087,6 +1089,7 @@ void Scene::updatePowerUps(int deltaTime)
         // Comprobar colisión con el jugador
         if (powerUp->isActive() && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
             // Aplicar el efecto del power-up según su tipo
+            audioManager.playSound("power-up", 0.3f);
             switch (powerUp->getType()) {
             case SMALL_HEART:
                 player->collectSmallHeart();
