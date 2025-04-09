@@ -126,7 +126,7 @@ void PowerUp::update(int deltaTime)
         if (bFloatingUpwards) {
             // Para corazones pequeños: 
             // 1. Movimiento ascendente constante
-            position.y -= 0.05f; // Velocidad de ascenso más rápida
+            position.y -= 0.0001f * deltaTime; 
 
             // 2. Calcular explícitamente una nueva posición X con movimiento sinusoidal
             // El tambaleo en X debe ser independiente de la posición original

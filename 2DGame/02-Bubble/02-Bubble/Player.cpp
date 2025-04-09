@@ -16,7 +16,7 @@ enum PlayerAnims
 };
 
 enum LanzaActions {
-	THROW_LEFT, STANDS_LEFT, THROW_RIGHT, STANDS_RIGHT, UP, DOWN
+	THROW_LEFT, STANDS_LEFT, THROW_RIGHT, STANDS_RIGHT, UP, DOWN, THROW_LEFT_LARGE, THROW_RIGHT_LARGE
 };
 
 void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
@@ -148,7 +148,7 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 
 	spritesheet_lanza.loadFromFile("images/lanzas1.png", TEXTURE_PIXEL_FORMAT_RGBA);
 	sprite_lanza = Sprite::createSprite(glm::ivec2(48, 16), glm::vec2(0.333, 0.25), &spritesheet_lanza, &shaderProgram);
-	sprite_lanza->setNumberAnimations(6);
+	sprite_lanza->setNumberAnimations(8);
 
 	sprite_lanza->setAnimationSpeed(THROW_LEFT, 30);
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
@@ -160,6 +160,17 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.666f, 0.f));
 	sprite_lanza->addKeyframe(THROW_LEFT, glm::vec2(0.333f, 0.f));
+
+	sprite_lanza->setAnimationSpeed(THROW_LEFT_LARGE, 30);
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.333f, 0.f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.5f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.f, 0.75f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.5f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.666f, 0.f));
+	sprite_lanza->addKeyframe(THROW_LEFT_LARGE, glm::vec2(0.333f, 0.f));
 
 	sprite_lanza->setAnimationSpeed(STANDS_LEFT, 8);
 	sprite_lanza->addKeyframe(STANDS_LEFT, glm::vec2(0.333f, 0.f));
@@ -174,6 +185,17 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.333f, 0.25f));
 	sprite_lanza->addKeyframe(THROW_RIGHT, glm::vec2(0.f, 0.f));
+
+	sprite_lanza->setAnimationSpeed(THROW_RIGHT_LARGE, 30);
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.333f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.5f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.333f, 0.5f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.5f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.333f, 0.25f));
+	sprite_lanza->addKeyframe(THROW_RIGHT_LARGE, glm::vec2(0.f, 0.f));
 
 	sprite_lanza->setAnimationSpeed(STANDS_RIGHT, 8);
 	sprite_lanza->addKeyframe(STANDS_RIGHT, glm::vec2(0.f, 0.f));

@@ -496,11 +496,9 @@ void HUD::updateBossHeartAnimations()
 void HUD::updateWeaponIcon(WeaponType weaponType)
 {
     if (weaponType == SPEAR) {
-		cout << "Spear" << endl;
         weaponIcon->changeAnimation(WEAPON_SPEAR);
     }
     else if (weaponType == ICE_TOTEM) {
-		cout << "Ice Totem" << endl;
         weaponIcon->changeAnimation(WEAPON_ICE_TOTEM);
     }
 }

@@ -8,7 +8,7 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 131 /*1 123 131 188 205*/
+#define INIT_PLAYER_X_TILES 141 /*1 123 131 188 205*/
 #define INIT_PLAYER_Y_TILES 99 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
@@ -59,6 +59,7 @@ Scene::Scene()
     }
     instructionsSprite = NULL;
     creditsSprite = NULL;
+    sticksCreated = false;
 
 }
 
@@ -164,7 +165,7 @@ void Scene::init()
 
     pair<std::vector<int>, int> playerLifes = player->getplayerLifes();
     hud->syncWithPlayer(playerLifes.first, playerLifes.second);
-
+    sticksCreated = false;
 
     hud = new HUD();
     hud->init(glm::ivec2(2, 2), texProgram);
@@ -423,6 +424,7 @@ void Scene::resetGame()
     fallingSticks.clear();
     stickPositionsX.clear();
 
+    sticksCreated = false;
     // Generar nuevas posiciones X para los palos
     float range1Size = STICK_RANGE1_MAX - STICK_RANGE1_MIN;
     float range2Size = STICK_RANGE2_MAX - STICK_RANGE2_MIN;
@@ -649,7 +651,7 @@ void Scene::updateGameplay(int deltaTime)
 
     glm::ivec2 posPlayer = player->getPosition();
 
-    
+	cout << "Posicion Jugador: " << posPlayer.x << ", " << posPlayer.y << endl;
 
     // Comprobar si el jugador está sobre pinchos
     if (checkSpikeCollision() && !player->isInvulnerable()) {
@@ -660,9 +662,127 @@ void Scene::updateGameplay(int deltaTime)
     for (auto platform : movingPlatforms) {
         platform->update(deltaTime);
     }
+    static bool largeHeartSpawned = false; // Bandera para asegurarnos de que solo se genere una vez
+    if (!largeHeartSpawned && posPlayer.x >= 3713) {
+        glm::vec2 powerUpPosition(posPlayer.x - 8, posPlayer.y -5 ); // Posición del power-up en la misma Y que el jugador
+        spawnPowerUp(powerUpPosition, LARGE_HEART); // Generar el power-up
+        largeHeartSpawned = true; // Marcar como generado
+    }
+
+    static const float specialStickX = 3650.0f;
+    static bool specialStickCreated = false;
+    static int specialStickIndex = -1;
+
+    // Calcular los límites de la cámara
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camRight = camX + CAMERA_WIDTH;
+
+    // Verificar si la posición x=3650 es visible en la cámara
+    bool isSpecialStickVisible = (specialStickX >= camX && specialStickX <= camRight);
+
+    if (isSpecialStickVisible && !specialStickCreated) {
+        // Si la posición es visible y el stick aún no se ha creado, crearlo
+        FallingStick* stick = new FallingStick();
+        stick->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+
+        // Posicionar el stick en la parte superior de la cámara
+        float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+        stick->setPosition(glm::vec2(specialStickX, camY - 60)); // Un poco arriba de la cámara
+
+        stick->setTileMap(mapWalls, mapPlatforms);
+        stick->startFalling();
+
+        fallingSticks.push_back(stick);
+        stickPositionsX.push_back(specialStickX);
+
+        // Guardar el índice de este stick especial
+        specialStickIndex = fallingSticks.size() - 1;
+        specialStickCreated = true;
+    }
+    else if (!isSpecialStickVisible && specialStickCreated) {
+        // Si la posición ya no es visible y el stick se había creado, eliminarlo
+        if (specialStickIndex >= 0 && specialStickIndex < fallingSticks.size()) {
+            delete fallingSticks[specialStickIndex];
+            fallingSticks.erase(fallingSticks.begin() + specialStickIndex);
+            stickPositionsX.erase(stickPositionsX.begin() + specialStickIndex);
+        }
+
+        // Resetear las variables
+        specialStickCreated = false;
+        specialStickIndex = -1;
+    }
+
+    // Gestionar los sticks de la zona especial
+    if (posPlayer.x >= 3100 && posPlayer.x <= 3300 &&
+        posPlayer.y >= 940 && posPlayer.y <= 1440) {
+
+        // Solo crear sticks si la bandera está en false
+        if (!sticksCreated) {
+            // Crear exactamente dos falling sticks en posiciones X fijas
+            float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+
+            // Posiciones X fijas para los sticks
+            float stick1X = 3150.0f;
+            float stick2X = 3230.0f;
+
+            // Stick 1: posición X fija
+            FallingStick* stick1 = new FallingStick();
+            stick1->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+            stick1->setPosition(glm::vec2(stick1X, camY - 50));
+            stick1->setTileMap(mapWalls, mapPlatforms);
+            stick1->startFalling();
+            fallingSticks.push_back(stick1);
+            stickPositionsX.push_back(stick1X);
+
+            // Stick 2: posición X fija
+            FallingStick* stick2 = new FallingStick();
+            stick2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
+            stick2->setPosition(glm::vec2(stick2X, camY - 80));
+            stick2->setTileMap(mapWalls, mapPlatforms);
+            stick2->startFalling();
+            fallingSticks.push_back(stick2);
+            stickPositionsX.push_back(stick2X);
+
+            // Guardar los índices de estos sticks especiales para poder identificarlos después
+            specialStickIndices.clear();
+            specialStickIndices.push_back(fallingSticks.size() - 2); // Índice del primer stick especial
+            specialStickIndices.push_back(fallingSticks.size() - 1); // Índice del segundo stick especial
+
+            // Marcar que los sticks ya han sido creados
+            sticksCreated = true;
+        }
+    }
+    else {
+        // Si el jugador está fuera de la zona completa y los sticks fueron creados
+        if (sticksCreated) {
+            // Si el jugador sale de la zona y los sticks fueron creados, eliminarlos
+            if (!specialStickIndices.empty()) {
+                // Eliminar los sticks especiales en orden inverso para no afectar los índices
+                for (int i = specialStickIndices.size() - 1; i >= 0; --i) {
+                    int index = specialStickIndices[i];
+
+                    // Verificar que el índice sea válido
+                    if (index >= 0 && index < fallingSticks.size()) {
+                        // Eliminar el stick
+                        delete fallingSticks[index];
+                        fallingSticks.erase(fallingSticks.begin() + index);
+                        stickPositionsX.erase(stickPositionsX.begin() + index);
+                    }
+                }
+
+                // Limpiar la lista de índices
+                specialStickIndices.clear();
+            }
+
+            // Reiniciar la bandera
+            sticksCreated = false;
+        }
+    }
+
 
     updateSnakes(deltaTime);
     updateFallingSticks(deltaTime);
+    updateSpecialOrcos(deltaTime);
     updateOrcos(deltaTime);
     updatePowerUps(deltaTime);
    
@@ -707,7 +827,7 @@ void Scene::updateGameplay(int deltaTime)
     }
 
     // Calcular las coordenadas de la c�mara
-    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
     float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
 
     if (!bossCam) {
@@ -1020,7 +1140,7 @@ void Scene::spawnPowerUp(const glm::vec2& position, PowerUpType type)
 {
     PowerUp* powerUp = new PowerUp(type);
     powerUp->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram);
-    if (type == SMALL_HEART || type == LARGE_HEART) {
+    if (type == SMALL_HEART ) {
         powerUp->setFloatingType(true, true); // Flota hacia arriba
     }
     else {
@@ -1502,4 +1622,87 @@ PowerUpType Scene::getRandomPowerUpType()
     // Seleccionar un índice aleatorio
     int index = rand() % (sizeof(types) / sizeof(types[0]));
     return types[index];
+}
+
+void Scene::updateSpecialOrcos(int deltaTime)
+{
+    glm::ivec2 posPlayer = player->getPosition();
+    float camX = posPlayer.x + 32.f - CAMERA_WIDTH / 2.0f;
+    float camY = posPlayer.y + 32.f - CAMERA_HEIGHT / 2.0f;
+    float camRight = camX + CAMERA_WIDTH;
+    float camBottom = camY + CAMERA_HEIGHT;
+
+    // Definir las posiciones específicas de los orcos
+    static const glm::vec2 orcoPos1(3224.0f, 896.0f);
+    static const glm::vec2 orcoPos2(3214.0f, 1232.0f);
+    static const glm::vec2 stickPos(3214.0f, camY - 50);  // La posición Y se ajustará en función de la cámara
+
+    // Variables estáticas para rastrear si los orcos ya han sido creados
+    static bool orco1Created = false;
+    static bool orco2Created = false;
+    static Orco* specialOrco1 = nullptr;
+    static Orco* specialOrco2 = nullptr;
+    static FallingStick* specialStick = nullptr;
+
+    // Comprobar si la posición del orco 1 es visible
+    bool isOrco1Visible = (orcoPos1.x >= camX && orcoPos1.x <= camRight &&
+        orcoPos1.y >= camY && orcoPos1.y <= camBottom);
+
+    // Comprobar si la posición del orco 2 es visible
+    bool isOrco2Visible = (orcoPos2.x >= camX && orcoPos2.x <= camRight &&
+        orcoPos2.y >= camY && orcoPos2.y <= camBottom);
+
+    // Si el orco 1 es visible y no ha sido creado todavía
+    if (isOrco1Visible && !orco1Created) {
+        specialOrco1 = new Orco();
+        Orco::Direction dir = (posPlayer.x < orcoPos1.x) ? Orco::LEFT : Orco::RIGHT;
+        specialOrco1->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, dir);
+        specialOrco1->setPosition(orcoPos1);
+        specialOrco1->setTileMap(mapWalls, mapPlatforms);
+        specialOrco1->setMovingPlatforms(&movingPlatforms);
+        specialOrco1->setPlayerPosition(&posPlayer);
+
+        // Configurar callback para daño al jugador
+        specialOrco1->setPlayerHitCallback([this]() {
+            if (!player->isInvulnerable()) {
+                player->isHitted();
+            }
+            });
+
+        orcos.push_back(specialOrco1);
+        orco1Created = true;
+    }
+
+    // Si el orco 2 es visible y no ha sido creado todavía
+    if (isOrco2Visible && !orco2Created) {
+        specialOrco2 = new Orco();
+        Orco::Direction dir = (posPlayer.x < orcoPos2.x) ? Orco::LEFT : Orco::RIGHT;
+        specialOrco2->init(glm::ivec2(SCREEN_X, SCREEN_Y), texProgram, dir);
+        specialOrco2->setPosition(orcoPos2);
+        specialOrco2->setTileMap(mapWalls, mapPlatforms);
+        specialOrco2->setMovingPlatforms(&movingPlatforms);
+        specialOrco2->setPlayerPosition(&posPlayer);
+
+        // Configurar callback para daño al jugador
+        specialOrco2->setPlayerHitCallback([this]() {
+            if (!player->isInvulnerable()) {
+                player->isHitted();
+            }
+            });
+
+        orcos.push_back(specialOrco2);
+        orco2Created = true;
+
+       
+    }
+
+    // Si los orcos ya fueron creados, verificar si siguen vivos
+    // Si mueren, debemos resetear las variables para permitir que sean recreados la próxima vez
+    if (orco1Created && (specialOrco1 == nullptr || !specialOrco1->isAlive())) {
+        orco1Created = false;
+    }
+
+    if (orco2Created && (specialOrco2 == nullptr || !specialOrco2->isAlive())) {
+        orco2Created = false;
+    }
 }
