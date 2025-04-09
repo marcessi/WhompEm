@@ -100,6 +100,11 @@ private:
     AudioManager* audioManager;
     bool jumpSoundPlayed;
     bool spearSoundPlayed;
+    bool iceTotemSoundPlaying;
+
+    bool godModeActive;
+    bool godModeKeyPressed;
+    bool recoverLivesKeyPressed;
 
     // Nuevas variables para el sistema de power-ups
     int gourds;

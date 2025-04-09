@@ -110,10 +110,8 @@ void Orco::update(int deltaTime)
 
         // El sprite se actualiza pero no se mueve cuando está congelado
         //sprite->update(deltaTime);
-        return;
     }
 
-    sprite->update(deltaTime);
 
     // Manejar el estado de golpeado
     if (isHit) {
@@ -161,6 +159,13 @@ void Orco::update(int deltaTime)
             playerHitted();; // Llamar a la función de callback para dañar al jugador
         }
     }
+
+	if (frozen) {
+		// Si está congelado, no se mueve
+		return;
+	}
+
+    sprite->update(deltaTime);
 
     // Si está cayendo para encontrar suelo al inicio
     if (bFalling && !bJumping)

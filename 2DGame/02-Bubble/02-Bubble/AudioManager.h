@@ -22,6 +22,8 @@ public:
 
     void loadSound(const std::string& name, const std::string& filePath);
     void playSound(const std::string& name, float volume);
+    void playSoundLoop(const std::string& name, float volume); // Nueva función para reproducir en bucle
+    void stopSound(const std::string& name); // Nueva función para detener un sonido específico
     void stopAllSounds();
 
 private:
