@@ -102,7 +102,7 @@ void Orco::update(int deltaTime)
         sprite->setAlpha(alpha);
 
         // Descongelar después de 5 segundos (5000 ms)
-        if (frozenTimer >= 5000) {
+        if (frozenTimer >= 3000) {
             frozen = false;
             frozenTimer = 0;
             sprite->setAlpha(1.0f);  // Restaurar opacidad normal
