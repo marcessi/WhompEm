@@ -372,6 +372,7 @@ void Scene::initSounds() {
     // Nuevos sonidos para game over y victoria
     audioManager.loadSound("game_over", "sounds/game_over.mp3");
     audioManager.loadSound("victory", "sounds/victory.mp3");
+	audioManager.loadSound("boss_death", "sounds/boss_death.mp3");
 }
 
 void Scene::resetGame()
@@ -379,7 +380,14 @@ void Scene::resetGame()
     // Reiniciar estado del juego
     gameState = MENU_MAIN;
     currentOption = OPTION_START_GAME;
+    delete boss;
+	boss = nullptr;
+    if (hud != nullptr) {
+        hud->showBossHealthBar(false);
+    }
     bossDefeated = false;
+    bossCam = false;
+	bossSpawned = false;
     menuTime = 0.0f;
     currentTime = 0.0f;
 
@@ -949,6 +957,12 @@ void Scene::updatePowerUps(int deltaTime)
         // Actualizar el power-up
         powerUp->update(deltaTime);
 
+		if (powerUp->getType() == TOTEM_BOSS && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
+			setBossDefeated();
+			powerUp->deactivate();
+            return;
+		}
+
         // Comprobar colisión con el jugador
         if (powerUp->isActive() && powerUp->collisionWithPlayer(posPlayer, playerSize)) {
             // Aplicar el efecto del power-up según su tipo
@@ -1439,7 +1453,7 @@ void Scene::updateBoss(int deltaTime)
         // Comprobar si el jugador golpea al boss con la lanza
         glm::ivec2 bossPos = boss->getPosition();
         glm::ivec2 bossSize = boss->getSize();
-        if (player->checkSpearCollision(bossPos, bossSize)) {
+        if (player->getCurrentWeapon() != ICE_TOTEM && player->checkSpearCollision(bossPos, bossSize)) {
             boss->hit();
             player->decrementFlintSpearHits();
             if (hud != nullptr) {
@@ -1451,18 +1465,16 @@ void Scene::updateBoss(int deltaTime)
         // Si el boss muere, generar un power-up importante
         if (!boss->isAlive()) {
             // Generar power-up de tipo grande
-            spawnPowerUp(glm::vec2(bossPos.x + 32, bossPos.y + 32), LARGE_HEART);
+            spawnPowerUp(glm::vec2(bossPos.x + 32, bossPos.y + 32), TOTEM_BOSS);
 
             // Eliminar el boss
             delete boss;
             boss = nullptr;
 
             // Cambiar la música de vuelta a la normal
-            audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
+            audioManager.stopMusic();
+			audioManager.playSound("boss_death", 0.6f);
 
-            // Cambiar a modo de cámara normal
-            bossCam = false;
-            currentCheckpoint = 0; // Volver al checkpoint anterior
             if (hud != nullptr) {
                 hud->showBossHealthBar(false);
             }
