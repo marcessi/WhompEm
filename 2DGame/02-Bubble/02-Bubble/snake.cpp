@@ -17,6 +17,8 @@ void Snake::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram, Dir
     dir = initialDir;
     bJumping = true;
     jumpAngle = 0;
+    frozen = false;
+    frozenTimer = 0;
 
     // Límites de movimiento por defecto
     minX = 0;
@@ -59,6 +61,27 @@ void Snake::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram, Dir
 
 void Snake::update(int deltaTime)
 {
+
+    if (frozen) {
+        frozenTimer += deltaTime;
+
+        // Efecto de parpadeo: alternar visibilidad cada 100ms
+        bool visible = ((frozenTimer / 100) % 2 == 0);
+        float alpha = visible ? 0.7f : 0.3f;  // Alternar entre 70% y 30% de opacidad
+        sprite->setAlpha(alpha);
+
+        // Descongelar después de 5 segundos (5000 ms)
+        if (frozenTimer >= 5000) {
+            frozen = false;
+            frozenTimer = 0;
+            sprite->setAlpha(1.0f);  // Restaurar opacidad normal
+        }
+
+        // El sprite se actualiza pero no se mueve cuando está congelado
+        //sprite->update(deltaTime);
+        return;
+    }
+
     sprite->update(deltaTime);
 
     // Guardar la posición previa para restaurarla en caso de colisión
@@ -158,6 +181,11 @@ void Snake::setPosition(const glm::vec2& pos)
 glm::ivec2 Snake::getPosition()
 {
     return posSnake;
+}
+
+void Snake::freeze() {
+    frozen = true;
+    frozenTimer = 0;
 }
 
 bool Snake::collisionWithPlayer(const glm::ivec2& playerPos, const glm::ivec2& playerSize) const

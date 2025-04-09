@@ -21,6 +21,7 @@ public:
     void setMovementLimits(int minXLimit, int maxXLimit);
 	int getminX() { return minX; }
     glm::ivec2 getSize() const;
+    void freeze();
 
 private:
     Direction dir;
@@ -33,6 +34,8 @@ private:
     Sprite *sprite;
     TileMap *mapWalls;
     TileMap *mapPlatforms;
+    bool frozen;          // Indica si la serpiente está congelada
+    int frozenTimer;      // Contador para el tiempo de congelación
 };
 
 #endif // _SNAKE_INCLUDE

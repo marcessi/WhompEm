@@ -186,25 +186,41 @@ bool TileMap::collisionMoveRight(const glm::ivec2 &pos, const glm::ivec2 &size) 
 	return false;
 }
 
-bool TileMap::collisionMoveDown(const glm::ivec2 &pos, const glm::ivec2 &size, int *posY) const
+bool TileMap::collisionMoveDown(const glm::ivec2& pos, const glm::ivec2& size, int* posY) const
 {
+	// Validate that the map is not null
+	if (map == nullptr) {
+		cerr << "Error: TileMap::map is null. Ensure loadLevel() is called successfully." << endl;
+		return false;
+	}
+
 	int x0, x1, y;
-	
+
 	x0 = pos.x / tileSize;
 	x1 = (pos.x + size.x - 1) / tileSize;
 	y = (pos.y + size.y - 1) / tileSize;
-	for(int x=x0; x<=x1; x++)
-	{
-		if(map[y*mapSize.x+x] != 0)
-		{
-			if(*posY - tileSize * y + size.y <= 4)
-			{
+
+	// Validate that y is within bounds
+	if (y < 0 || y >= mapSize.y) {
+		cerr << "Error: Y-coordinate out of bounds in collisionMoveDown. Y = " << y << endl;
+		return false;
+	}
+
+	for (int x = x0; x <= x1; x++) {
+		// Validate that x is within bounds
+		if (x < 0 || x >= mapSize.x) {
+			cerr << "Error: X-coordinate out of bounds in collisionMoveDown. X = " << x << endl;
+			continue;
+		}
+
+		if (map[y * mapSize.x + x] != 0) {
+			if (*posY - tileSize * y + size.y <= 4) {
 				*posY = tileSize * y - size.y;
 				return true;
 			}
 		}
 	}
-	
+
 	return false;
 }
 

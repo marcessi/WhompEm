@@ -15,6 +15,12 @@ enum Direction
     LEFT, RIGHT
 };
 
+enum WeaponType
+{
+    SPEAR, ICE_TOTEM
+};
+
+
 class Player
 {
 
@@ -29,6 +35,7 @@ public:
     void setPosition(const glm::vec2& pos);
     bool checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& enemySize);
     bool isInvulnerable() const { return invulnerable; }
+    WeaponType getCurrentWeapon() const { return currentWeapon; }
 
     glm::ivec2 getPosition();
     void setLeftLimit(float leftLimit);
@@ -63,6 +70,11 @@ private:
     Sprite* sprite;
     Texture spritesheet_lanza;
     Sprite* sprite_lanza;
+    Texture spritesheet_ice_totem;
+    Sprite* sprite_ice_totem;
+    WeaponType currentWeapon;
+    bool weaponSwitchPressed;
+
     TileMap* mapWalls, * mapPlatforms;
     const std::vector<MovingPlatform*>* movingPlatforms; // Nueva referencia
     Direction dir;
@@ -77,6 +89,7 @@ private:
     int hitTimer;
     int invulnerableTimer;
     bool player_visible;
+    bool jumpingIce;
 
     // Variables para el salto al recibir daño
     bool knockbackJumping;

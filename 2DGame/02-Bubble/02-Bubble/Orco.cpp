@@ -29,6 +29,8 @@ Orco::Orco()
     bFalling = true; // El orco comienza cayendo hasta encontrar suelo
     hitTime = 0; // Tiempo transcurrido desde último golpe
     isHit = false; // Indica si está en modo "golpeado"
+    frozen = false;
+    frozenTimer = 0;
 }
 
 Orco::~Orco()
@@ -43,6 +45,8 @@ void Orco::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram, Dire
     bJumping = false;  // Comienza en el suelo esperando
     bFalling = true;   // Pero necesita caer hasta encontrar suelo
     jumpAngle = 0;
+    frozen = false;
+    frozenTimer = 0;
 
     // Cargar spritesheet
     spritesheet.loadFromFile("images/enemie_verde.png", TEXTURE_PIXEL_FORMAT_RGBA);
@@ -88,6 +92,26 @@ void Orco::update(int deltaTime)
 {
     if (!alive)
         return;
+
+    if (frozen) {
+        frozenTimer += deltaTime;
+
+        // Efecto de parpadeo: alternar visibilidad cada 100ms
+        bool visible = ((frozenTimer / 100) % 2 == 0);
+        float alpha = visible ? 0.7f : 0.3f;  // Alternar entre 70% y 30% de opacidad
+        sprite->setAlpha(alpha);
+
+        // Descongelar después de 5 segundos (5000 ms)
+        if (frozenTimer >= 5000) {
+            frozen = false;
+            frozenTimer = 0;
+            sprite->setAlpha(1.0f);  // Restaurar opacidad normal
+        }
+
+        // El sprite se actualiza pero no se mueve cuando está congelado
+        //sprite->update(deltaTime);
+        return;
+    }
 
     sprite->update(deltaTime);
 
@@ -416,6 +440,11 @@ void Orco::render()
 {
     if (alive)
         sprite->render();
+}
+
+void Orco::freeze() {
+    frozen = true;
+    frozenTimer = 0;
 }
 
 void Orco::setTileMap(TileMap* tileMapWalls, TileMap* tileMapPlatforms)

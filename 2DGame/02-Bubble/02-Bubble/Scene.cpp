@@ -8,8 +8,8 @@
 #define SCREEN_X 32
 #define SCREEN_Y 16
 
-#define INIT_PLAYER_X_TILES 205 /*1 123 131 188 205*/
-#define INIT_PLAYER_Y_TILES 33 /*10 3 99 99 33*/
+#define INIT_PLAYER_X_TILES 1 /*1 123 131 188 205*/
+#define INIT_PLAYER_Y_TILES 10 /*10 3 99 99 33*/
 
 #define NUM_STICKS 20
 
@@ -838,7 +838,13 @@ void Scene::updateOrcos(int deltaTime)
 
         // Verificar colisión con la lanza del jugador
         if (player->checkSpearCollision(orcoPos, orcoSize)) {
-            orco->hit();
+            // Si es el totem de hielo, congelar al orco en vez de dañarlo
+            if (player->getCurrentWeapon() == ICE_TOTEM) {
+                orco->freeze();
+            }
+            else {
+                orco->hit();
+            }
         }
 
         // Verificar si el orco está dentro del rango visible
@@ -1065,13 +1071,17 @@ void Scene::updateSnakes(int deltaTime)
         glm::ivec2 snakePos = snake->getPosition();
         glm::ivec2 snakeSize = snake->getSize(); // Asumimos que la clase Snake tiene un método getSize()
 
-        // Comprobar si la lanza del jugador ha golpeado a la serpiente
         if (player->checkSpearCollision(snakePos, snakeSize)) {
-            // Eliminar la serpiente al ser golpeada por la lanza
-            delete snake;
-            snakes.erase(snakes.begin() + i);
-            --i; // Ajustar el índice después de eliminar
-            continue; // Continuar con la siguiente serpiente
+            // Si es el totem de hielo, congelar la serpiente en vez de matarla
+            if (player->getCurrentWeapon() == ICE_TOTEM) {
+                snake->freeze();
+            }
+            else {
+                // Eliminar la serpiente al ser golpeada por la lanza
+                delete snake;
+                snakes.erase(snakes.begin() + i);
+                --i; // Ajustar el índice después de eliminar
+            }
         }
 
         // Comprobar colisiones con el jugador (si no fue eliminada)

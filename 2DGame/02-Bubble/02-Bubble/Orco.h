@@ -33,6 +33,7 @@ public:
     bool isAlive() const;
     void hit(); // Función para recibir daño
     void kill();
+    void freeze();
 
 private:
     // Sprites
@@ -59,6 +60,8 @@ private:
     int lives; // Contador de vidas
     bool isHit; // Indica si está en modo "golpeado"
     int hitTime; // Tiempo transcurrido desde el último golpe
+    bool frozen;
+    int frozenTimer;
 
     // Referencias
     const glm::ivec2* playerPos; // Puntero a la posición del jugador
