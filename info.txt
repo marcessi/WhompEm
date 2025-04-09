@@ -29,7 +29,9 @@ Quan passes per la calavera surt un power-up de cor gran co al joc original
 So:
 - música de fons del nivell
 - música de fons del boss
-- efectes de so variats
+- efectes de so de: salt, dany al jugador, mort del boss, recollir power-up, llança, totem de gel, efectes de desplaçament del menu y de confirmar
+- musica de victoria
+- música de derrota
 
 
 Pantalles:
