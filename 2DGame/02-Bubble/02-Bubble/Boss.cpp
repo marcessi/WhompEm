@@ -10,8 +10,11 @@ Boss::Boss()
     playerPos = nullptr;
     playerHitCallback = nullptr;
     alive = true;
-    lives = 9;
-    hitsPerLife = 3;
+    maxHearts = 7;          // El boss tiene 3 corazones inicialmente
+    hearts.clear();
+    for (int i = 0; i < maxHearts; ++i) {
+        hearts.push_back(3); // Cada corazón tiene 3 puntos de vida
+    }
     invulnerable = false;
     visible = true;
     sprite = nullptr;
@@ -270,30 +273,59 @@ void Boss::updateIdleState(int deltaTime)
 {
     stateTimer += deltaTime;
 
-    // En estado IDLE, comprobar colisión con el suelo para "aterrizar"
+    // Si las hojas están activas, esperar a que termine la animación
+    if (leaves_active) {
+        // La animación de las hojas se actualiza en el método update principal
+        // No necesitamos hacer nada más aquí excepto esperar
 
-    
-    // Después de 2 segundos, cambiar a estado de ataque
-    if (stateTimer >= 1500) {
-        
+     
+        return;
+    }
 
-        // y elevarse para empezar a volar
-		position.y -= 0.1f * deltaTime;
-        
-		if (position.y <= initialY - 60.f) {
+    // Si acabamos de entrar al estado IDLE, activar la animación de hojas
+    if (stateTimer < 100 && !leaves_active && firstTime) { // Recién llegado al estado
+        visible = false;
+        leaves_active = true;
+        leaf_animation_timer = 0.0f;
+        circle_radius = 10.0f;
+        expand_circle = true;
+        firstTime = false;
 
+        // Guardar el centro donde está el boss
+        glm::ivec2 bossSize = getSize();
+        leaves_center = glm::vec2(position.x + bossSize.x / 2, position.y + bossSize.y / 2);
+
+        // Posicionar las hojas alrededor del centro
+        for (int i = 0; i < leaves.size(); ++i) {
+            Leaf& leaf = leaves[i];
+            leaf.angle = i * (2.0f * 3.14159 / 8.0f);
+            leaf.radius = circle_radius;
+
+            float leafX = leaves_center.x + cos(leaf.angle) * leaf.radius - 8.0f; // Centrar (16x16)
+            float leafY = leaves_center.y + sin(leaf.angle) * leaf.radius - 8.0f;
+            leaf.sprite->setPosition(glm::vec2(float(tileMapDispl.x + leafX), float(tileMapDispl.y + leafY)));
+        }
+    }
+
+    // El timer comienza a contar después de que la animación de hojas termine
+    // La animación termina cuando leaves_active se establece a false en el método update principal
+
+    // Después de 2 segundos desde que terminó la animación de hojas, cambiar a estado de ataque
+    if (!leaves_active && stateTimer >= 2000) {
+        // Elevarse para empezar a volar
+        position.y -= 0.1f * deltaTime;
+
+        if (position.y <= initialY - 60.f) {
             stateTimer = 0.0f;
             firstTime = true;
             state = ATTACKING;
             sprite->changeAnimation(ANIM_ATTACKING_LEFT);
             initialY = position.y;
-			
-		}
+        }
 
         // Iniciar con dirección aleatoria
-        vx  = 0.5f;
+        vx = 0.5f;
     }
-   
 }
 
 
@@ -530,24 +562,81 @@ void Boss::hit()
 {
     if (invulnerable)
         return;
-
+    bool heartDamaged = false;
+    int damageToDeal = 2; 
     // Aplicar daño
-    hitsPerLife--;
-
-    if (hitsPerLife <= 0) {
-        lives--;
-        hitsPerLife = 3;
-
-        // Comprobar si ha muerto
-        if (lives <= 0) {
-            alive = false;
-            return;
+    for (int i = hearts.size() - 1; i >= 0; --i) {
+        if (hearts[i] > 0) {
+            // Caso especial: Si solo queda 1 punto de vida en este corazón
+            // y aún tenemos más corazones, quitamos 1 aquí y 1 en el siguiente
+            if (hearts[i] == 1 && damageToDeal == 2 && i > 0) {
+                hearts[i] = 0;        // Vaciar este corazón
+                hearts[i - 1]--;        // Quitar 1 al siguiente corazón
+                heartDamaged = true;
+                break;
+            }
+            // Caso especial: Si solo quedan 2 puntos de vida en este corazón
+            // y es el último corazón, dejamos 0 en lugar de -1
+            else if (hearts[i] == 2 && i == 0 && damageToDeal == 2) {
+                hearts[i] = 0;
+                heartDamaged = true;
+                break;
+            }
+            // Caso normal: Reducimos los puntos de daño de este corazón
+            else {
+                if (hearts[i] >= damageToDeal) {
+                    hearts[i] -= damageToDeal;
+                }
+                else {
+                    hearts[i] = 0;
+                }
+                heartDamaged = true;
+                break;
+            }
         }
+    }
+
+    // Si no se hizo daño a ningún corazón, el boss está muerto
+    if (!heartDamaged) {
+        alive = false;
+        return;
     }
 
     // Activar invulnerabilidad
     invulnerable = true;
     invulnerableTimer = 0.0f;
+
+    // NUEVO: Cambiar de estado cuando es golpeado (excepto en IDLE)
+    if (state != IDLE) {
+        // Si está en ATTACKING o CRAZY, pasa a GROUNDED
+        if (state == CRAZY) {
+            state = GROUNDED;
+            stateTimer = 0.0f;
+            firstTime = true;
+            amplitude = 10.0f;
+            sprite->changeAnimation(ANIM_GROUNDED);
+
+            // Iniciar caída para buscar el suelo
+            vy = 2.0f;
+        }
+        // Si ya está en GROUNDED, pasa a ATTACKING o CRAZY (aleatoriamente)
+        else if (state == GROUNDED && vy == 0) {
+            // 50% de probabilidad para cada estado
+      
+                state = ATTACKING;
+                sprite->changeAnimation(ANIM_ATTACKING_LEFT);
+            
+            stateTimer = 0.0f;
+            firstTime = true;
+        }
+        else if (state == ATTACKING) {
+            state = CRAZY;
+            sprite->changeAnimation(ANIM_CRAZY);
+
+            stateTimer = 0.0f;
+            firstTime = 0.f;
+        }
+    }
 }
 
 bool Boss::isAlive() const
@@ -568,4 +657,11 @@ glm::ivec2 Boss::getSize() const
 std::vector<FallingStick*>& Boss::getFallingSticks()
 {
     return fallingSticks;
+}
+
+std::pair<std::vector<int>, int> Boss::getLives() const
+{
+    // Devolvemos solo el vector de corazones y un 0 como segundo elemento 
+    // para mantener compatibilidad con la interfaz similar del Player
+    return std::make_pair(hearts, 0);
 }

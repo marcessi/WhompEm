@@ -667,6 +667,9 @@ void Scene::updateGameplay(int deltaTime)
             player->getBuffaloHelmetHits(),
             player->hasDeerskinShirt()
         );
+
+        hud->updateWeaponIcon(player->getCurrentWeapon());
+
     // Verificar si el jugador ha alcanzado el punto de control actual
     if (!isAnimating && currentCheckpoint < checkpoints.size() && posPlayer.x >= checkpoints[currentCheckpoint])
     {
@@ -1367,7 +1370,7 @@ void Scene::updateBoss(int deltaTime)
         // Posicionar el boss a una altura similar a la del suelo donde está el jugador
         // pero un poco a la derecha para que sea visible
         float floorY = 770.0f; // Altura aproximada del suelo en esta zona
-        boss->setPosition(glm::vec2(4000.f, posPlayer.y - 5.f)); // Restamos el tamaño del boss
+        boss->setPosition(glm::vec2(4000.f, posPlayer.y + 7.f)); // Restamos el tamaño del boss
         boss->setTileMap(mapWalls, mapPlatforms);
         boss->setPlayerPosition(&posPlayer);
 
@@ -1379,6 +1382,11 @@ void Scene::updateBoss(int deltaTime)
             });
 
         bossSpawned = true;
+        if (hud != nullptr) {
+            hud->showBossHealthBar(true);
+            std::pair<std::vector<int>, int> bossLives = boss->getLives();
+            hud->setBossHealth(bossLives.first);
+        }
     }
 
     // Actualizar el boss si existe
@@ -1388,6 +1396,10 @@ void Scene::updateBoss(int deltaTime)
             glm::ivec2 bossPos = boss->getPosition();
         }
 
+        if (hud != nullptr) {
+            std::pair<std::vector<int>, int> bossLives = boss->getLives();
+            hud->setBossHealth(bossLives.first);
+        }
         boss->update(deltaTime);
         boss->setPlayerPosition(&posPlayer);
 
@@ -1418,7 +1430,10 @@ void Scene::updateBoss(int deltaTime)
         glm::ivec2 bossSize = boss->getSize();
         if (player->checkSpearCollision(bossPos, bossSize)) {
             boss->hit();
-            cout << "Boss hit!" << endl;
+            if (hud != nullptr) {
+                std::pair<std::vector<int>, int> bossLives = boss->getLives();
+                hud->setBossHealth(bossLives.first);
+            }
         }
 
         // Si el boss muere, generar un power-up importante
@@ -1429,6 +1444,18 @@ void Scene::updateBoss(int deltaTime)
             // Eliminar el boss
             delete boss;
             boss = nullptr;
+
+            // Cambiar la música de vuelta a la normal
+            audioManager.playMusic("sounds/sacredwoods_music.mp3", true, 0.4f);
+
+            // Cambiar a modo de cámara normal
+            bossCam = false;
+            currentCheckpoint = 0; // Volver al checkpoint anterior
+            if (hud != nullptr) {
+                hud->showBossHealthBar(false);
+            }
+            
         }
+       
     }
 }

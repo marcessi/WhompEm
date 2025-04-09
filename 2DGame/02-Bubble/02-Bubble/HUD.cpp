@@ -12,6 +12,9 @@ HUD::HUD()
     }
     hasWeapon = false;
     gameover = false;
+    showBossHealth = false;
+    bossIcon = nullptr;
+    bossHeartsLogic.clear();
 
     // Inicializar los umbrales para obtener más corazones con calabazas
     gourdThresholds = { 9, 12, 16, 22, 30, 42, 62, 99 };
@@ -43,6 +46,19 @@ HUD::~HUD()
         delete deerskinShirtIcon;
     }
 
+    // Liberar memoria de los sprites del boss
+    if (bossIcon != nullptr) {
+        bossIcon->free();
+        delete bossIcon;
+    }
+
+    for (auto& heart : bossHearts) {
+        if (heart != nullptr) {
+            heart->free();
+            delete heart;
+        }
+    }
+
    
 }
 
@@ -52,12 +68,15 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
 
     // Inicializar el arma (arriba a la izquierda)
     spritesheet_weapon.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
-    weaponIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_weapon, &shaderProgram);
+    weaponIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_weapon, &shaderProgram);
 
-    weaponIcon->setNumberAnimations(1);
-    weaponIcon->setAnimationSpeed(WEAPON_ACTIVE, 8);
-    weaponIcon->addKeyframe(WEAPON_ACTIVE, glm::vec2(0.75f, 0.5f));
-    weaponIcon->changeAnimation(WEAPON_ACTIVE);
+    weaponIcon->setNumberAnimations(2);
+    weaponIcon->setAnimationSpeed(WEAPON_SPEAR, 8);
+    weaponIcon->addKeyframe(WEAPON_SPEAR, glm::vec2(0.75f, 0.25f));
+    weaponIcon->setAnimationSpeed(WEAPON_ICE_TOTEM, 8);
+    weaponIcon->addKeyframe(WEAPON_ICE_TOTEM, glm::vec2(0.25f, 0.75f)); // Suponiendo que hay una textura en esta posición
+
+    weaponIcon->changeAnimation(WEAPON_SPEAR);
 
     // Posicionar el arma arriba a la izquierda
     weaponIcon->setPosition(glm::vec2(float(screenPos.x), float(screenPos.y)));
@@ -68,11 +87,11 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
     // Crear 4 iconos de luz (máximo posible), pero mostrar solo los activos inicialmente
     for (int i = 0; i < 4; ++i)
     {
-        Sprite* light = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_lights, &shaderProgram);
+        Sprite* light = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_lights, &shaderProgram);
 
         light->setNumberAnimations(1);
         light->setAnimationSpeed(LIGHT_ON, 8);
-        light->addKeyframe(LIGHT_ON, glm::vec2(0.5f, 0.5f));
+        light->addKeyframe(LIGHT_ON, glm::vec2(0.5f, 0.25f));
         light->changeAnimation(LIGHT_ON);
 
         // Posicionar las luces a la derecha del arma
@@ -87,7 +106,7 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
     // Crear 12 corazones pero inicialmente solo se mostrarán 4
     for (int i = 0; i < 12; ++i)
     {
-        Sprite* heart = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_hearts, &shaderProgram);
+        Sprite* heart = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_hearts, &shaderProgram);
 
         heart->setNumberAnimations(4);
 
@@ -115,26 +134,26 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
     spritesheet_powerups.loadFromFile("images/HUD.png", TEXTURE_PIXEL_FORMAT_RGBA);
 
     // Inicializar Flint Spear
-    flintSpearIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_powerups, &shaderProgram);
+    flintSpearIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_powerups, &shaderProgram);
     flintSpearIcon->setNumberAnimations(1);
     flintSpearIcon->setAnimationSpeed(0, 8);
-    flintSpearIcon->addKeyframe(0, glm::vec2(0.25f, 0.0f)); // Ajusta a coordenadas correctas
+    flintSpearIcon->addKeyframe(0, glm::vec2(0.0f, 0.50f)); // Ajusta a coordenadas correctas
     flintSpearIcon->changeAnimation(0);
     flintSpearIcon->setPosition(glm::vec2(float(screenPos.x), float(screenPos.y + 54))); // Posicionar en fila inferior
 
     // Inicializar Buffalo Helmet
-    buffaloHelmetIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_powerups, &shaderProgram);
+    buffaloHelmetIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_powerups, &shaderProgram);
     buffaloHelmetIcon->setNumberAnimations(1);
     buffaloHelmetIcon->setAnimationSpeed(0, 8);
-    buffaloHelmetIcon->addKeyframe(0, glm::vec2(0.50f, 0.0f)); // Ajusta a coordenadas correctas
+    buffaloHelmetIcon->addKeyframe(0, glm::vec2(0.250f, 0.50f)); // Ajusta a coordenadas correctas
     buffaloHelmetIcon->changeAnimation(0);
     buffaloHelmetIcon->setPosition(glm::vec2(float(screenPos.x + 18), float(screenPos.y + 54))); // A la derecha del flint
 
     // Inicializar Deerskin Shirt
-    deerskinShirtIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.5f), &spritesheet_powerups, &shaderProgram);
+    deerskinShirtIcon = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.25f, 0.25f), &spritesheet_powerups, &shaderProgram);
     deerskinShirtIcon->setNumberAnimations(1);
     deerskinShirtIcon->setAnimationSpeed(0, 8);
-    deerskinShirtIcon->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Ajusta a coordenadas correctas
+    deerskinShirtIcon->addKeyframe(0, glm::vec2(0.5f, 0.50f)); // Ajusta a coordenadas correctas
     deerskinShirtIcon->changeAnimation(0);
     deerskinShirtIcon->setPosition(glm::vec2(float(screenPos.x + 36), float(screenPos.y + 54))); // A la derecha del helmet
 
@@ -144,6 +163,40 @@ void HUD::init(const glm::ivec2& screenPos, ShaderProgram& shaderProgram)
     hasDeerskinShirt = false;
 
     // Inicializar contador de calabazas
+
+    
+    bossIconTexture.loadFromFile("images/bossShits.png", TEXTURE_PIXEL_FORMAT_RGBA);
+
+    // Inicializar corazones del boss (misma textura que los del jugador)
+    for (int i = 0; i < 7; ++i) // 9 corazones máximo para el boss
+    {
+        Sprite* heartBoss = Sprite::createSprite(glm::ivec2(16, 16), glm::vec2(0.125f, 1.f), &bossIconTexture, &shaderProgram);
+
+        heartBoss->setNumberAnimations(4);
+
+        heartBoss->setAnimationSpeed(FULL_HEART, 8);
+        heartBoss->addKeyframe(FULL_HEART, glm::vec2(0.0f, 0.0f));
+
+        heartBoss->setAnimationSpeed(CASI_FULL, 8);
+        heartBoss->addKeyframe(CASI_FULL, glm::vec2(0.125f, 0.0f));
+
+        heartBoss->setAnimationSpeed(CASI_EMPTY, 8);
+        heartBoss->addKeyframe(CASI_EMPTY, glm::vec2(0.250f, 0.0f));
+
+        heartBoss->setAnimationSpeed(EMPTY_HEART, 8);
+        heartBoss->addKeyframe(EMPTY_HEART, glm::vec2(0.375f, 0.0f));
+
+        heartBoss->changeAnimation(FULL_HEART);
+
+        // Posicionar en fila horizontal después del icono del boss
+        float xPos = screenPos.x + (i % 6) * 10;
+        float yPos = screenPos.y + 18 + (i / 6) * 10;
+        heartBoss->setPosition(glm::vec2(xPos +35, yPos));
+        bossHearts.push_back(heartBoss);
+    }
+
+    // Inicialmente no mostramos la salud del boss
+    showBossHealth = false;
    
 
     updateHeartAnimations();
@@ -167,6 +220,14 @@ void HUD::update(int deltaTime)
 
     if (hasDeerskinShirt)
         deerskinShirtIcon->update(deltaTime);
+
+    if (showBossHealth) {
+        
+
+        for (auto& heart : bossHearts) {
+            heart->update(deltaTime);
+        }
+    }
    
 
   
@@ -194,6 +255,14 @@ void HUD::render()
 
     if (hasDeerskinShirt)
         deerskinShirtIcon->render();
+
+    if (showBossHealth) {
+
+        // Solo renderizar los corazones necesarios
+        for (size_t i = 0; i < bossHeartsLogic.size(); ++i) {
+            bossHearts[i]->render();
+        }
+    }
 
 }
 
@@ -227,14 +296,24 @@ void HUD::updatePosition(float cameraX, float cameraY)
         int column = i / 6;     // 0 para primera columna, 1 para segunda columna
         int row = i % 6;        // 0-5 para filas en cada columna
 
-        float xPos = cameraX + screenPos.x + column * 10;  // Columnas separadas por 18 píxeles
-        float yPos = cameraY + screenPos.y + 18 + row * 10; // Filas separadas por 10 píxeles
+        float xPos = cameraX + screenPos.x + column * 10 - 4;  // Columnas separadas por 18 píxeles
+        float yPos = cameraY + screenPos.y + 15 + row * 10; // Filas separadas por 10 píxeles
 
         hearts[i]->setPosition(glm::vec2(xPos, yPos));
     }
-    flintSpearIcon->setPosition(glm::vec2(cameraX + screenPos.x, cameraY + screenPos.y + 120));
-    buffaloHelmetIcon->setPosition(glm::vec2(cameraX + screenPos.x + 18, cameraY + screenPos.y + 120));
-    deerskinShirtIcon->setPosition(glm::vec2(cameraX + screenPos.x + 36, cameraY + screenPos.y + 120));
+    flintSpearIcon->setPosition(glm::vec2(cameraX + screenPos.x, cameraY + screenPos.y + 205));
+    buffaloHelmetIcon->setPosition(glm::vec2(cameraX + screenPos.x + 18, cameraY + screenPos.y + 205));
+    deerskinShirtIcon->setPosition(glm::vec2(cameraX + screenPos.x + 36, cameraY + screenPos.y + 205));
+
+    for (int i = 0; i < 7; ++i) {
+        int column = i / 6;     // 0 para primera columna, 1 para segunda columna
+        int row = i % 6;        // 0-5 para filas en cada columna
+
+        float xPos = cameraX + screenPos.x + column * 10 + 16;  // Columnas separadas por 18 píxeles
+        float yPos = cameraY + screenPos.y + 15 + row * 10; // Filas separadas por 10 píxeles
+
+        bossHearts[i]->setPosition(glm::vec2(xPos, yPos));
+    }
 
 
 }
@@ -384,4 +463,45 @@ void HUD::updatePowerUpIcons(int flintSpearHits, int buffaloHelmetHits, bool has
     this->hasDeerskinShirt = hasDeerskinShirt;
 }
 
+void HUD::setBossHealth(const std::vector<int>& bossHealth)
+{
+    bossHeartsLogic = bossHealth;
+    updateBossHeartAnimations();
+}
+
+void HUD::showBossHealthBar(bool show)
+{
+    showBossHealth = show;
+}
+
+void HUD::updateBossHeartAnimations()
+{
+    // Actualizar la animación de cada corazón del boss según su estado lógico
+    for (size_t i = 0; i < bossHeartsLogic.size() && i < bossHearts.size(); ++i) {
+        int heartLevel = bossHeartsLogic[i];
+        if (heartLevel == 3) {
+            bossHearts[i]->changeAnimation(FULL_HEART);
+        }
+        else if (heartLevel == 2) {
+            bossHearts[i]->changeAnimation(CASI_FULL);
+        }
+        else if (heartLevel == 1) {
+            bossHearts[i]->changeAnimation(CASI_EMPTY);
+        }
+        else {
+            bossHearts[i]->changeAnimation(EMPTY_HEART);
+        }
+    }
+}
+void HUD::updateWeaponIcon(WeaponType weaponType)
+{
+    if (weaponType == SPEAR) {
+		cout << "Spear" << endl;
+        weaponIcon->changeAnimation(WEAPON_SPEAR);
+    }
+    else if (weaponType == ICE_TOTEM) {
+		cout << "Ice Totem" << endl;
+        weaponIcon->changeAnimation(WEAPON_ICE_TOTEM);
+    }
+}
 
