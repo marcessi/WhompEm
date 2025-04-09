@@ -6,6 +6,8 @@
 #include "Sprite.h"
 #include "Texture.h"
 #include "ShaderProgram.h"
+#include "Player.h" // Incluir para tener acceso a WeaponType
+
 
 class HUD {
 public:
@@ -36,11 +38,17 @@ public:
 
 	void collectPotion();
 
+    void setBossHealth(const std::vector<int>& bossHealth);
+    void showBossHealthBar(bool show);
+    void updateBossHeartAnimations();
+    void updateWeaponIcon(WeaponType weaponType);
+
 private:
     // Enumeraciones para las animaciones
     enum HeartAnim { FULL_HEART, CASI_FULL, CASI_EMPTY, EMPTY_HEART };
-    enum WeaponAnim { WEAPON_ACTIVE };
     enum LightAnim { LIGHT_ON };
+    enum WeaponAnim { WEAPON_SPEAR, WEAPON_ICE_TOTEM };
+
 
     // Métodos de actualización interna
     void updateHeartAnimations();
@@ -62,6 +70,7 @@ private:
     Texture spritesheet_lights;
     Texture spritesheet_gourds;
     Texture spritesheet_numbers;
+    Texture bossIconTexture;
 
     // Estado lógico
     std::vector<int> heartsLogic;
@@ -86,6 +95,11 @@ private:
     int flintSpearHits;
     int buffaloHelmetHits;
     bool hasDeerskinShirt;
+
+    Sprite* bossIcon;              // Icono que representa al boss
+    std::vector<Sprite*> bossHearts; // Corazones del boss (máximo 9)
+    std::vector<int> bossHeartsLogic; // Estado lógico de los corazones del boss
+    bool showBossHealth;
 };
 
 #endif // _HUD_INCLUDE

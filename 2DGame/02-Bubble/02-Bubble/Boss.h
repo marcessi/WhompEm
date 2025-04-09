@@ -40,6 +40,8 @@ public:
     void setPlayerHitCallback(std::function<void()> callback);
     void hit(); // Cuando el jugador golpea al jefe
 
+    std::pair<std::vector<int>, int> getLives() const;
+
     bool isAlive() const;
     glm::ivec2 getPosition() const;
     glm::ivec2 getSize() const;
@@ -68,8 +70,8 @@ private:
     bool alive;
 
     // Vidas
-    int lives;
-    int hitsPerLife;
+    std::vector<int> hearts;  // Nuevo: Vector de corazones, cada uno con 3 puntos de vida
+    int maxHearts;
     bool invulnerable;
     float invulnerableTimer;
 

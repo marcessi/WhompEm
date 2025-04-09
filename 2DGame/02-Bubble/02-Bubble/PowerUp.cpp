@@ -64,31 +64,31 @@ void PowerUp::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
     }
 
     // Crear el sprite con las dimensiones correctas
-    sprite = Sprite::createSprite(size, glm::vec2(0.25f, 0.5f), &spritesheet, &shaderProgram);
+    sprite = Sprite::createSprite(size, glm::vec2(0.25f, 0.25f), &spritesheet, &shaderProgram);
 
     // Configurar animación simple
     sprite->setNumberAnimations(1);
     sprite->setAnimationSpeed(0, 8);
     if (type == SMALL_HEART) {
-        sprite->addKeyframe(0, glm::vec2(0.0f, 0.5f)); // Corazón pequeño
+        sprite->addKeyframe(0, glm::vec2(0.0f, 0.25f)); // Corazón pequeño
     }
     else if (type == LARGE_HEART) {
-        sprite->addKeyframe(0, glm::vec2(0.25f, 0.5f)); // Corazón grande
+        sprite->addKeyframe(0, glm::vec2(0.25f, 0.25f)); // Corazón grande
     }
     else if (type == MAGIC_POTION) {
-        sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Poción mágica
+        sprite->addKeyframe(0, glm::vec2(0.5f, 0.250f)); // Poción mágica
     }
     else if (type == FLINT_SPEAR) {
-        sprite->addKeyframe(0, glm::vec2(0.25f, 0.0f)); // Flint Spear Head (ajusta coordenadas)
+        sprite->addKeyframe(0, glm::vec2(0.0f, 0.50f)); // Flint Spear Head (ajusta coordenadas)
     }
     else if (type == BUFFALO_HELMET) {
-        sprite->addKeyframe(0, glm::vec2(0.50f, 0.0f)); // Buffalo Helmet (ajusta coordenadas)
+        sprite->addKeyframe(0, glm::vec2(0.250f, 0.50f)); // Buffalo Helmet (ajusta coordenadas)
     }
     else if (type == DEERSKIN_SHIRT) {
-        sprite->addKeyframe(0, glm::vec2(0.75f, 0.0f)); // Deerskin Shirt (ajusta coordenadas)
+        sprite->addKeyframe(0, glm::vec2(0.5f, 0.50f)); // Deerskin Shirt (ajusta coordenadas)
     }
     else { // GOURD
-        sprite->addKeyframe(0, glm::vec2(0.5f, 0.5f)); // Calabaza
+        sprite->addKeyframe(0, glm::vec2(0.75f, 0.5f)); // Calabaza
     }
 
     sprite->changeAnimation(0);
