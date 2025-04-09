@@ -1279,7 +1279,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 6, posPlayer.y + 18);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
 		}
@@ -1353,7 +1353,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_LEFT || currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 6, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
 		}
@@ -1367,7 +1367,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
 		}
@@ -1381,7 +1381,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_LEFT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x - 19 + 30, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
 		}
@@ -1458,7 +1458,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_RIGHT || currentWeaponAnim == STANDS_RIGHT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 18);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
 		}
@@ -1532,7 +1532,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == THROW_RIGHT || currentWeaponAnim == STANDS_RIGHT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 			}
 			validAttackAnimation = true;
 		}
@@ -1546,7 +1546,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_RIGHT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
 		}
@@ -1560,7 +1560,7 @@ bool Player::checkSpearCollision(const glm::ivec2& enemyPos, const glm::ivec2& e
 			else if (currentWeapon == ICE_TOTEM && (currentWeaponAnim == STANDS_RIGHT)) {
 				// Totem de hielo - centro del efecto
 				weaponTipPos = glm::ivec2(posPlayer.x + 26, posPlayer.y + 10);
-				weaponTipSize = glm::ivec2(8, 8); // 햞ea de efecto mayor para el totem
+				weaponTipSize = glm::ivec2(16, 20); // 햞ea de efecto mayor para el totem
 				validAttackAnimation = true;
 			}
 		}
