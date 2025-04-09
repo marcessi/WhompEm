@@ -20,18 +20,24 @@ PowerUps:
 - magic potion: te una filera de vides extres
 - spear: fa la llansa més llarga durant la resta de la partida
 
-Quan passes per la calavera surt un poer-up de cor gran co al joc original
+Plataformes movedisses
+
+Congelació d'enemics amb el totem de gel
+
+Quan passes per la calavera surt un power-up de cor gran co al joc original
 
 So:
 - música de fons del nivell
 - música de fons del boss
+- efectes de so variats
 
 
 Pantalles:
 -inici
 -credits
 -instruccions
--pantalla final
+-pantalla final de victoria
+-pantalla final de gameover
 
 HUD: mostra les vides en froma de cor, les pocions màgiques que li queden, la arma que està usant, i els power-ups a la part d'abaic de helmet, flint i deerskin shirt
 
@@ -53,8 +59,6 @@ Jugador:
 	fletxa dreta/Esquerra +x moure's picant
  -h: recupera tots els cors
  -g: god mode, es invencible
-
-
 
 Enemics:
  -Bambú:
