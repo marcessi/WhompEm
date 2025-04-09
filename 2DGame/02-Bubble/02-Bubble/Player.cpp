@@ -34,9 +34,16 @@ void Player::init(const glm::ivec2& tileMapPos, ShaderProgram& shaderProgram)
 	deerskinShirtActive = false;
 	jumpingIce = false;
 	deerskinTimer = 0.0f;
+
+	godModeActive = false;
+	godModeKeyPressed = false;
+	recoverLivesKeyPressed = false;
+
 	audioManager = nullptr;
 	jumpSoundPlayed = false;
 	spearSoundPlayed = false;
+	iceTotemSoundPlaying = false;
+
 	gameover = false;
 	knockbackAngle = 0;
 	knockbackJumping = false;
@@ -221,21 +228,58 @@ void Player::update(int deltaTime)
 	static bool canJumpAgain = true;
 	jumpingIce = false;
 
+	if (Game::instance().getKey(GLFW_KEY_G)) {
+		if (!godModeKeyPressed) {
+			godModeActive = !godModeActive; // Alternar el estado del modo dios
+			if (godModeActive) {
+				invulnerable = true; // Activar invulnerabilidad permanente
+			}
+			else {
+				invulnerable = false; // Desactivar invulnerabilidad
+				player_visible = true; // Asegurarse de que el jugador sea visible
+			}
+			godModeKeyPressed = true;
+		}
+	}
+	else {
+		godModeKeyPressed = false;
+	}
+
+	// Implementación de recuperación de todas las vidas con la tecla H
+	static bool recoverLivesKeyPressed = false;
+
+	if (Game::instance().getKey(GLFW_KEY_H)) {
+		if (!recoverLivesKeyPressed) {
+			// Restaurar todos los corazones al máximo
+			for (int i = 0; i < hearts.size(); ++i) {
+				hearts[i] = 3;
+			}
+			// Restaurar todas las vidas (luces)
+			ligths = 2;
+
+			recoverLivesKeyPressed = true;
+		}
+	}
+	else {
+		recoverLivesKeyPressed = false;
+	}
+
 	// Manejar el cambio de arma con la tecla C
 	if (Game::instance().getKey(GLFW_KEY_C)) {
 		if (!weaponSwitchPressed) {
 			// Solo cambiar el arma cuando la tecla se presiona por primera vez
 			currentWeapon = (currentWeapon == SPEAR) ? ICE_TOTEM : SPEAR;
 			weaponSwitchPressed = true;
-
-			// Reproducir sonido de cambio de arma si está disponible
-			if (audioManager) {
-				audioManager->playSound("switch", 0.3f);
-			}
 		}
 	}
 	else {
 		weaponSwitchPressed = false;
+	}
+
+	// Si el godmode está activo, mantener la invulnerabilidad activa
+	// y no permitir que se desactive por otros métodos
+	if (godModeActive) {
+		invulnerable = true;
 	}
 
 	if (deerskinShirtActive) {
@@ -245,8 +289,10 @@ void Player::update(int deltaTime)
 		if (deerskinTimer >= 5000.0f) {
 			deerskinShirtActive = false;
 			deerskinTimer = 0.0f;
-			invulnerable = false;
-			sprite->setAlpha(1.0f);
+			if (!godModeActive) { // Solo desactivar si no está en godmode
+				invulnerable = false;
+				sprite->setAlpha(1.0f);
+			}
 			player_visible = true;
 		}
 	}
@@ -352,7 +398,7 @@ void Player::update(int deltaTime)
 	// Gestionar invulnerabilidad (parpadeo)
 	if (invulnerable) {
 		invulnerableTimer += deltaTime;
-		sprite->setAlpha(0.7f);
+		sprite->setAlpha(0.8f);
 
 		// Hacer que el jugador parpadee (alternar visibilidad cada 100ms)
 		if ((invulnerableTimer / 100) % 2 == 0) {
@@ -939,14 +985,30 @@ void Player::update(int deltaTime)
 			if (currentWeapon == SPEAR) {
 				audioManager->playSound("spear", 0.3f);
 			}
-			else {
-				//audioManager->playSound("ice", 0.3f);
-			}
 			spearSoundPlayed = true;
 		}
 	}
 	else {
 		spearSoundPlayed = false;
+	}
+
+	if (Game::instance().getKey(GLFW_KEY_X)) {
+		if (currentWeapon == ICE_TOTEM && audioManager && !iceTotemSoundPlaying) {
+			// Usar playSoundLoop en lugar de playSound para mantener el sonido en bucle
+			audioManager->playSoundLoop("ice_totem", 0.1f);
+			iceTotemSoundPlaying = true;
+		}
+		else if (currentWeapon == SPEAR){
+			audioManager->stopSound("ice_totem");
+			iceTotemSoundPlaying = false;
+		}
+	}
+	else {
+		if (iceTotemSoundPlaying && audioManager) {
+			// Detener solo el sonido del totem de hielo cuando se suelta la tecla X
+			audioManager->stopSound("ice_totem");
+			iceTotemSoundPlaying = false;
+		}
 	}
 
 	sprite->setPosition(glm::vec2(float(tileMapDispl.x + posPlayer.x), float(tileMapDispl.y + posPlayer.y + 1)));
@@ -957,6 +1019,8 @@ void Player::update(int deltaTime)
 void Player::render()
 {
 	if (player_visible) {
+		if (godModeActive) sprite->setAlpha(0.7f); // Hacer al jugador semitransparente para indicar godmode
+		else sprite->setAlpha(1.f); // Hacer al jugador semitransparente para indicar godmode
 		sprite->render();
 		if (spear_visible) {
 			if (currentWeapon == SPEAR || jumpingIce) {
@@ -1010,9 +1074,16 @@ pair<std::vector<int>, int> Player::getplayerLifes() {
 }
 
 void Player::isHitted() {
+	// Si el modo dios está activo, no permitir que el jugador reciba daño
+	if (godModeActive) {
+		return;
+	}
+
+	// Si tiene la camisa de ciervo, también evitar daño
 	if (deerskinShirtActive) {
 		return;
 	}
+
 	// Solo aplicar daño si el jugador no está en estado invulnerable
 	if (!invulnerable) {
 		hitted = true;
@@ -1030,17 +1101,15 @@ void Player::isHitted() {
 		bool rightPressed = Game::instance().getKey(GLFW_KEY_RIGHT);
 
 		if (leftPressed && !rightPressed) {
-			// Si solo se pulsa izquierda, salto hacia la izquierda
-			knockbackDir = -1;
+			knockbackDir = -1; // Salto hacia la izquierda
 		}
 		else if (rightPressed && !leftPressed) {
-			// Si solo se pulsa derecha, salto hacia la derecha
-			knockbackDir = 1;
+			knockbackDir = 1; // Salto hacia la derecha
 		}
 		else {
-			// Si no se pulsa ninguna o se pulsan ambas, salto vertical
-			knockbackDir = 0;
+			knockbackDir = 0; // Salto vertical
 		}
+
 		// Si tiene Buffalo Helmet, reducir contador pero no perder vida
 		if (buffaloHelmetHits > 0) {
 			buffaloHelmetHits--;

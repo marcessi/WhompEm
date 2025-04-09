@@ -365,6 +365,7 @@ void Scene::initSounds() {
     // Cargar efectos de sonido
     audioManager.loadSound("jump", "sounds/jump1.mp3");
     audioManager.loadSound("spear", "sounds/spear.mp3");
+    audioManager.loadSound("ice_totem", "sounds/ice_totem.mp3");
     audioManager.loadSound("menu_move", "sounds/menu_move.mp3");
     audioManager.loadSound("menu_select", "sounds/menu_select.mp3");
 
